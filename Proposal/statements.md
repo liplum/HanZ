@@ -111,7 +111,7 @@ Example 2. To calculate BMI.
 
 ```
 | BMI |
-BMI = BMI指数:180 :75
+BMI = BMI指数 身高:180 体重:75
 ```
 
 ## Object
