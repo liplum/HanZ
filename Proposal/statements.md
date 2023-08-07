@@ -34,30 +34,36 @@ Example 1: To declare a variable, named `次数`, and initialize it by `10`
 
 ## Control Flow
 
-1. The `if` or `如果` is used to run the code block if the condition is true.
-2. The `ifNot` or `如果不` is used to run the code block if the condition is false.
+1. **If-Else**: Use `if`/`如果` to execute a code block when a condition is true, and `else`/`否则` to execute another code block when the condition is false.
+2. **Else-If**: Use `elif`/`又如果` for multiple conditions. It allows you to check additional conditions after the initial `if`/`如果` condition.
 
-Example 1: To use `if`.
+Example 1: To use `IF-Else`.
 
 ```
 值:=10
 如果 值 > 5
   值 *= 2
+否则
+  值 -= 5
 ```
 
-Example 1: To use `ifNot`.
+Example 2: To use `Else-IF`.
 
 ```
 值:=10
-如果不 值 < 5
+如果 值 < 5
   值 *= 2
+又如果 值 / 2 == 1 
+  值 -= 1
+否则
+  值++
 ```
 
 ## Loop
 
 ### While
 
-1. The `while` or `当` keyword is ued to declare a while-loop.
+1. The `while`/`当` keyword is ued to declare a while-loop.
 2. The condition goes after the keyword.
 3. The loop should end once the condition is false.
 
@@ -69,7 +75,7 @@ Example 1: To use `ifNot`.
 
 ### Until
 
-1. The `until` or `直到` keyword is used to declare an until-loop.
+1. The `until`/`直到` keyword is used to declare an until-loop.
 2. The condition goes after the keyword.
 3. The loop should end once the condition is true.
 
@@ -81,7 +87,7 @@ Example 1: To use `ifNot`.
 
 ## Function Declaration
 
-1. The `func` or `函数` keyword is used to declare a function.
+1. The `func`/`函数` keyword is used to declare a function.
 2. The last line of code is the return value.
 3. Parameters are defied after the name of function and started by a colon `:`.
 
@@ -103,11 +109,16 @@ Example 2. To calculate BMI.
 
 1.
 
+```
+| BMI |
+BMI = BMI指数:180 :75
+```
+
 ## Object
 
 ### Object Declaration
 
-1. The `object` or `对象` keyword is used to declare an object.
+1. The `object`/`对象` keyword is used to declare an object.
 2. Constructors are declared by the name of object, and should be named.
 3. Fields are declared in the object-level, and can be initialized in the constructors.
 

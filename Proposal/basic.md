@@ -15,7 +15,6 @@ The following keywords can't be used in identifier.
 | English | Chinese |
 |---------|---------|
 | if      | 如果    |
-| ifNot   | 如果不  |
 | object  | 对象    |
 | while   | 当      |
 | until   | 直到    |
