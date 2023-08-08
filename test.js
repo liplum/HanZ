@@ -2,10 +2,10 @@
 import test from "ava"
 import { lex } from "./dist/lexer.js"
 test("simple expr", t => {
-  const source = "5+16*3"
+  const source = "5.14+16*3"
   const tokens = lex(source)
   t.is(tokens.length , 5)
-  t.is(tokens[0].lexeme, "5")
+  t.is(tokens[0].lexeme, "5.14")
   t.is(tokens[1].lexeme, "+")
   t.is(tokens[2].lexeme, "16")
   t.is(tokens[3].lexeme, "*")
