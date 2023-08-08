@@ -21,6 +21,7 @@ export enum TokenType {
   vBar = "|",
   increase = "++",
   decrease = "++",
+  memberAccess = ".",
 }
 
 export enum Keyword {

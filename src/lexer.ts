@@ -13,9 +13,10 @@ function isValidIdentifierChar(char: string): boolean {
     (code >= 65 && code <= 90) || // A-Z
     (code >= 97 && code <= 122) || // a-z
     code === 95 || // _
+    code === 24 || // $
     (code >= 48 && code <= 57) || // 0-9
     (code >= 128 && code <= 1114111) // Unicode characters beyond ASCII
-  )
+  ) && code !== 0x7684 // "的" is kept for member access
 }
 
 export function lex(source: string) {
@@ -33,35 +34,36 @@ export function lex(source: string) {
 
   function scan(): Token | undefined {
     const c = peek()
-    if (c === "+") {
+    const code = c.charCodeAt(0)
+    if (c == "+") {
       advance()
       if (tryConsume("=")) return $op(TokenType.plusAssign)
       else if (tryConsume("+")) return $op(TokenType.increase)
       else return $op(TokenType.plus)
-    } else if (c === "-") {
+    } else if (c == "-") {
       advance()
       if (tryConsume("=")) return $op(TokenType.minusAssign)
       else if (tryConsume("-")) return $op(TokenType.decrease)
       else return $op(TokenType.minus)
-    } else if (c === "*") {
+    } else if (c == "*") {
       advance()
       if (tryConsume("=")) return $op(TokenType.timesAssign)
       else return $op(TokenType.times)
-    } else if (c === "/") {
+    } else if (c == "/") {
       advance()
       if (tryConsume("=")) return $op(TokenType.divideAssign)
       else return $op(TokenType.divide)
-    } else if (c === "%") {
+    } else if (c == "%") {
       advance()
       if (tryConsume("=")) return $op(TokenType.moduloAssign)
       else return $op(TokenType.modulo)
-    } else if (c === "=") {
+    } else if (c == "=") {
       advance()
       if (tryConsume("=")) return $op(TokenType.equal)
       else return $op(TokenType.assign)
     } else if (isDigit(c)) {
       return scanNumber()
-    } else if (c === `"`) {
+    } else if (c == `"`) {
       return scanString()
     } else if (c == "\n") {
       advance()
@@ -69,16 +71,19 @@ export function lex(source: string) {
       line++
       column = 0
       return token
-    } else if (c == ":") {
+    } else if (c == ":" || c == "：") {
       advance()
       if (tryConsume("=")) return $op(TokenType.init)
       else throw $err("TODO")
-    } else if (c == "|") {
+    } else if (c == "|" || c == "｜") {
       advance()
       return $op(TokenType.vBar)
+    } else if (c == "." || c == "的") {
+      advance()
+      return $op(TokenType.memberAccess)
     } else if (isValidIdentifierChar(c)) {
       return scanIdentifier()
-    } else if (column == 0 && c === " ") {
+    } else if (column == 0 && c == " ") {
       return scanIndent()
     } else {
       advance()
