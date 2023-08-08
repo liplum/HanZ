@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import test from "ava"
 import { lex } from "./dist/lexer.js"
 test("simple expr", t => {
@@ -12,8 +13,15 @@ test("simple expr", t => {
 })
 
 test("quoted string", t => {
-  const source = "\"hello, world!\""
+  const source = `"hello, world!"`
   const tokens = lex(source)
   t.is(tokens.length , 1)
   t.is(tokens[0].lexeme , "hello, world!")
+})
+
+test("escape string", t => {
+  const source = `"a\\\tb\\"c"`
+  const tokens = lex(source)
+  t.is(tokens.length , 1)
+  t.pass()
 })

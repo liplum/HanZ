@@ -43,7 +43,7 @@ export function lex(source: string) {
       else return $op(TokenType.assign)
     } else if (isDigit(c)) {
       return scanNumber()
-    } else if (c === "\"") {
+    } else if (c === `"`) {
       return scanString()
     }
   }
@@ -63,6 +63,7 @@ export function lex(source: string) {
     return $num(source.substring(start, pos))
   }
 
+  // TODO: Escape characters
   function scanString() {
     // excluding quotes
     const start = pos
@@ -78,6 +79,10 @@ export function lex(source: string) {
     // Consume closing quote
     advance()
     return $str(source.substring(start, pos - 1))
+  }
+
+  function scanEscape() {
+
   }
 
   function $num(value: string): Token {
