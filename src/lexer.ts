@@ -164,7 +164,7 @@ export function lex(source: string) {
   }
 
   function scanIndent(): Token {
-    let indent = 1
+    let indent = 0
     while (peek() == " ") {
       advance()
       indent++
