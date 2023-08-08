@@ -2,7 +2,7 @@
 import test from "ava"
 import { lex } from "./dist/lexer.js"
 import { TokenType } from "./dist/token.js"
-test("simple expr", t => {
+test("[lexer] simple expr", t => {
   const source = "5.14+16*3"
   const tokens = lex(source)
   t.is(tokens.length, 5)
@@ -13,14 +13,14 @@ test("simple expr", t => {
   t.is(tokens[4].lexeme, "3")
 })
 
-test("quoted string", t => {
+test("[lexer] quoted string", t => {
   const source = `"hello, world!"`
   const tokens = lex(source)
   t.is(tokens.length, 1)
   t.is(tokens[0].lexeme, "hello, world!")
 })
 
-test("escape string", t => {
+test("[lexer] escape string", t => {
   const source = `"a\\tb\\"c"`
   const tokens = lex(source)
   t.is(tokens.length, 1)
@@ -28,7 +28,7 @@ test("escape string", t => {
   t.pass()
 })
 
-test("identifier + new line", t => {
+test("[lexer] identifier + new line", t => {
   const source =
     `foo = 10
 bar = 5`
@@ -39,23 +39,39 @@ bar = 5`
   t.is(tokens[4].lexeme, "bar")
 })
 
-test("comment", t => {
+test("[lexer] comment", t => {
   const source =
     `foo = 10 # assign to 10
 # nothing
 bar = 5 # assign to 5`
-const tokens = lex(source)
-t.is(tokens.length, 8)
-t.is(tokens[0].lexeme, "foo")
-t.is(tokens[3].type, TokenType.newLine)
-t.is(tokens[4].type, TokenType.newLine)
-t.is(tokens[5].lexeme, "bar")
+  const tokens = lex(source)
+  t.is(tokens.length, 8)
+  t.is(tokens[0].lexeme, "foo")
+  t.is(tokens[3].type, TokenType.newLine)
+  t.is(tokens[4].type, TokenType.newLine)
+  t.is(tokens[5].lexeme, "bar")
 })
 
-test("large source", t => {
+test("[lexer] large source", t => {
   const source =
     `
+对象 账户
+| 余额 |
 
-  `
-  t.pass()
+账户 新建
+  余额 = 0
+
+账户 继承自: 另一账户
+  余额 = 另一账户的余额
+
+# to deposit money
+函数 存入: 金额
+  余额 += 金额
+  
+# to withdraw money
+函数 取出: 金额
+  余额 -= 金额
+`
+  const tokens = lex(source)
+  t.is(tokens.length, 52)
 })

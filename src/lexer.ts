@@ -78,7 +78,7 @@ export function lex(source: string) {
     } else if (code === 58 || code === 0xFF1A) { // ":", Fullwidth Colon
       advance()
       if (tryConsumeCode(61)) return $op(TokenType.init)
-      else throw $err("TODO")
+      else $op(TokenType.colon)
     } else if (code === 124 || code === 0xFF5C) { // "|", Fullwidth Vertical Line
       advance()
       return $op(TokenType.vBar)
@@ -176,28 +176,28 @@ export function lex(source: string) {
     return new LexError(msg, line, column, pos)
   }
 
-  function $indent(value: number): Token {
-    return { type: TokenType.indent, lexeme: value, line, pos, column }
+  function $indent(size: number): Token {
+    return { type: TokenType.indent, size, line, pos, column }
   }
 
   function $num(value: string): Token {
     return { type: TokenType.number, lexeme: value, line, pos, column }
   }
 
-  function $str(value: string): Token {
-    return { type: TokenType.string, lexeme: value, line, pos, column }
+  function $str(lexeme: string): Token {
+    return { type: TokenType.string, lexeme, line, pos, column }
   }
 
-  function $keyword(keyword: Keyword): Token {
-    return { type: TokenType.keyword, lexeme: keyword, line, pos, column }
+  function $keyword(lexeme: Keyword): Token {
+    return { type: TokenType.keyword, lexeme, line, pos, column }
   }
 
   function $op(operator: TokenType): Token {
     return { type: operator, lexeme: operator, line, pos, column }
   }
 
-  function $identifier(name: string): Token {
-    return { type: TokenType.identifier, lexeme: name, line, pos, column }
+  function $identifier(lexeme: string): Token {
+    return { type: TokenType.identifier, lexeme, line, pos, column }
   }
 
   function advance(): string {

@@ -22,6 +22,7 @@ export enum TokenType {
   increase = "++",
   decrease = "--",
   memberAccess = ".",
+  colon = ":",
 }
 
 export enum Keyword {
@@ -79,7 +80,7 @@ export type Token = ({
   lexeme: string
 } | {
   type: TokenType.indent
-  lexeme: number
+  size: number
 } | {
   type: TokenType.newLine
 }
