@@ -73,5 +73,5 @@ test("[lexer] large source", t => {
   余额 -= 金额
 `
   const tokens = lex(source)
-  t.is(tokens.length, 52)
+  t.is(tokens.length, 55)
 })

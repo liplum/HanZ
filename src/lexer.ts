@@ -78,7 +78,7 @@ export function lex(source: string) {
     } else if (code === 58 || code === 0xFF1A) { // ":", Fullwidth Colon
       advance()
       if (tryConsumeCode(61)) return $op(TokenType.init)
-      else $op(TokenType.colon)
+      else return $op(TokenType.colon)
     } else if (code === 124 || code === 0xFF5C) { // "|", Fullwidth Vertical Line
       advance()
       return $op(TokenType.vBar)
