@@ -1,10 +1,21 @@
 // lexer.ts
-import { TokenType, Keyword, Token } from "./token"
+import { TokenType, Keyword, Token, parseKeyword } from "./token.js"
 
-function isDigit(str: string): boolean {
-  const code = str.charCodeAt(0)
+function isDigit(char: string): boolean {
+  const code = char.charCodeAt(0)
   // ASCII codes for '0' to '9'
   return code >= 48 && code <= 57
+}
+
+function isValidIdentifierChar(char: string): boolean {
+  const code = char.charCodeAt(0)
+  return (
+    (code >= 65 && code <= 90) || // A-Z
+    (code >= 97 && code <= 122) || // a-z
+    code === 95 || // _
+    (code >= 48 && code <= 57) || // 0-9
+    (code >= 128 && code <= 1114111) // Unicode characters beyond ASCII
+  )
 }
 
 export function lex(source: string) {
@@ -21,25 +32,31 @@ export function lex(source: string) {
   return tokens
 
   function scan(): Token | undefined {
-    const c = advance()
+    const c = peek()
     if (c === "+") {
+      advance()
       if (tryConsume("=")) return $op(TokenType.plusAssign)
       else if (tryConsume("+")) return $op(TokenType.increase)
       else return $op(TokenType.plus)
     } else if (c === "-") {
+      advance()
       if (tryConsume("=")) return $op(TokenType.minusAssign)
       else if (tryConsume("-")) return $op(TokenType.decrease)
       else return $op(TokenType.minus)
     } else if (c === "*") {
+      advance()
       if (tryConsume("=")) return $op(TokenType.timesAssign)
       else return $op(TokenType.times)
     } else if (c === "/") {
+      advance()
       if (tryConsume("=")) return $op(TokenType.divideAssign)
       else return $op(TokenType.divide)
     } else if (c === "%") {
+      advance()
       if (tryConsume("=")) return $op(TokenType.moduloAssign)
       else return $op(TokenType.modulo)
     } else if (c === "=") {
+      advance()
       if (tryConsume("=")) return $op(TokenType.equal)
       else return $op(TokenType.assign)
     } else if (isDigit(c)) {
@@ -47,22 +64,41 @@ export function lex(source: string) {
     } else if (c === `"`) {
       return scanString()
     } else if (c == "\n") {
+      advance()
       const token: Token = { type: TokenType.newLine, line, pos, column }
       line++
       column = 0
       return token
     } else if (c == ":") {
+      advance()
       if (tryConsume("=")) return $op(TokenType.init)
       else throw $err("TODO")
     } else if (c == "|") {
+      advance()
       return $op(TokenType.vBar)
-    } else if (column == 1 && c === " ") {
+    } else if (isValidIdentifierChar(c)) {
+      return scanIdentifier()
+    } else if (column == 0 && c === " ") {
       return scanIndent()
+    } else {
+      advance()
     }
   }
 
-  function scanNumber() {
-    const start = pos - 1
+  function scanIdentifier(): Token {
+    const chars: string[] = []
+    while (isValidIdentifierChar(peek())) {
+      const char = advance()
+      chars.push(char)
+    }
+    const id = chars.join("")
+    const keyword = parseKeyword(id)
+    if (keyword) return $keyword(keyword)
+    else return $identifier(id)
+  }
+
+  function scanNumber(): Token {
+    const start = pos
     while (isDigit(peek())) {
       advance()
     }
@@ -87,10 +123,12 @@ export function lex(source: string) {
         case "\\": return "\\"
         case "b": return "\b"
         case "f": return "\b"
-        default: throw $err(`Invalid escape sequence: \\${char}`)
+        default: throw $err(`Invalid escape sequence: \\${char}, code=${char.charCodeAt(0)}`)
       }
 
     }
+    // Consume staring quote
+    advance()
     const chars: string[] = []
     while (peek() != "\"") {
       const char = advance()
@@ -142,6 +180,9 @@ export function lex(source: string) {
     return { type: operator, lexeme: operator, line, pos, column }
   }
 
+  function $identifier(name: string): Token {
+    return { type: TokenType.identifier, lexeme: name, line, pos, column }
+  }
 
   function advance(): string {
     pos++

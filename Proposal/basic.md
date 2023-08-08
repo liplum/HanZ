@@ -19,7 +19,7 @@ The following keywords can't be used in identifier.
 | while    | 当      |
 | until    | 直到    |
 | func     | 函数    |
-| break    | 跳出    |
+| break    | 中断    |
 | continue | 继续    |
 
 ## Operators

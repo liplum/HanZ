@@ -1,4 +1,4 @@
-export const enum TokenType {
+export enum TokenType {
   number = "number",
   string = "string",
   keyword = "keyword",
@@ -23,16 +23,43 @@ export const enum TokenType {
   decrease = "++",
 }
 
-export const enum Keyword {
-  if,
-  object,
-  while,
-  until,
-  func,
-  break,
-  continue,
+export enum Keyword {
+  if = "if",
+  object = "object",
+  while = "while",
+  until = "until",
+  func = "func",
+  break = "break",
+  continue = "continue",
 }
 
+export const en2Keyword = {
+  if: Keyword.if,
+  object: Keyword.object,
+  while: Keyword.while,
+  until: Keyword.until,
+  func: Keyword.func,
+  break: Keyword.break,
+  continue: Keyword.continue,
+}
+
+export const zh2Keyword = {
+  如果: Keyword.if,
+  对象: Keyword.object,
+  当: Keyword.while,
+  直到: Keyword.until,
+  函数: Keyword.func,
+  中断: Keyword.break,
+  继续: Keyword.continue,
+}
+
+export function isKeyword(identifier: string): boolean {
+  return Boolean(en2Keyword[identifier]) || Boolean(zh2Keyword[identifier])
+}
+
+export function parseKeyword(identifier: string): Keyword | undefined {
+  return en2Keyword[identifier] ?? zh2Keyword[identifier]
+}
 
 export type Token = ({
   type: TokenType
