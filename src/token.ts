@@ -17,6 +17,10 @@ export const enum TokenType {
   moduloAssign = "%=",
   equal = "==",
   assign = "=",
+  init = ":=",
+  vBar = "|",
+  increase = "++",
+  decrease = "++",
 }
 
 export const enum Keyword {

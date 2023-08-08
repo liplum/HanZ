@@ -24,9 +24,11 @@ export function lex(source: string) {
     const c = advance()
     if (c === "+") {
       if (tryConsume("=")) return $op(TokenType.plusAssign)
+      else if (tryConsume("+")) return $op(TokenType.increase)
       else return $op(TokenType.plus)
     } else if (c === "-") {
       if (tryConsume("=")) return $op(TokenType.minusAssign)
+      else if (tryConsume("-")) return $op(TokenType.decrease)
       else return $op(TokenType.minus)
     } else if (c === "*") {
       if (tryConsume("=")) return $op(TokenType.timesAssign)
@@ -49,6 +51,11 @@ export function lex(source: string) {
       line++
       column = 0
       return token
+    } else if (c == ":") {
+      if (tryConsume("=")) return $op(TokenType.init)
+      else throw $err("TODO")
+    } else if (c == "|") {
+      return $op(TokenType.vBar)
     } else if (column == 1 && c === " ") {
       return scanIndent()
     }
@@ -80,7 +87,7 @@ export function lex(source: string) {
         case "\\": return "\\"
         case "b": return "\b"
         case "f": return "\b"
-        default: throw new LexError(`Invalid escape sequence: \\${char}`, line, pos)
+        default: throw $err(`Invalid escape sequence: \\${char}`)
       }
 
     }
@@ -95,7 +102,7 @@ export function lex(source: string) {
       }
     }
     if (isAtEnd()) {
-      throw new LexError("Unterminated string", line, pos)
+      throw $err("Unterminated string")
     }
     // Consume closing quote
     advance()
@@ -109,6 +116,10 @@ export function lex(source: string) {
       indent++
     }
     return $indent(indent)
+  }
+
+  function $err(msg: string) {
+    return new LexError(msg, line, column, pos)
   }
 
   function $indent(value: number): Token {
@@ -128,7 +139,7 @@ export function lex(source: string) {
   }
 
   function $op(operator: TokenType): Token {
-    return { type: operator, lexeme: operator.toString(), line, pos, column }
+    return { type: operator, lexeme: operator, line, pos, column }
   }
 
 
@@ -157,11 +168,13 @@ export function lex(source: string) {
 
 export class LexError extends Error {
   line: number
+  column: number
   pos: number
-  constructor(message: string, line: number, pos: number) {
+  constructor(message: string, line: number, column: number, pos: number) {
     super(message)
     this.name = this.constructor.name
     this.line = line
+    this.column = column
     this.pos = pos
   }
 }
