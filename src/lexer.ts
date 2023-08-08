@@ -9,7 +9,7 @@ function isDigit(str: string): boolean {
 }
 
 export function lex(source: string) {
-  let pos = -1
+  let pos = 0
   let line = 0
   let column = 0
   const tokens: Token[] = []
@@ -41,8 +41,10 @@ export function lex(source: string) {
     } else if (c === "=") {
       if (tryConsume("=")) return $op(TokenType.equal)
       else return $op(TokenType.assign)
-    } else if (c && isDigit(c)) {
+    } else if (isDigit(c)) {
       return scanNumber()
+    } else if (c === "\"") {
+      return scanString()
     }
   }
 
@@ -59,6 +61,23 @@ export function lex(source: string) {
       }
     }
     return $num(source.substring(start, pos))
+  }
+
+  function scanString() {
+    // excluding quotes
+    const start = pos
+    while (peek() != "\"") {
+      if (peek() == "\n") {
+        line++
+      }
+      advance()
+    }
+    if (isAtEnd()) {
+      throw new Error(`Unterminated string at line ${line}`)
+    }
+    // Consume closing quote
+    advance()
+    return $str(source.substring(start, pos - 1))
   }
 
   function $num(value: string): Token {
@@ -94,5 +113,8 @@ export function lex(source: string) {
     }
     pos++
     return true
+  }
+  function isAtEnd(): boolean {
+    return pos >= source.length
   }
 }
