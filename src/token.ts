@@ -1,10 +1,10 @@
 export const enum TokenType {
-  number,
-  string,
-  keyword,
-  identifier,
-  indent,
-  newLine,
+  number = "number",
+  string = "string",
+  keyword = "keyword",
+  identifier = "identifier",
+  indent = "indent",
+  newLine = "new-line",
   plus = "+",
   minus = "-",
   times = "*",
@@ -45,6 +45,11 @@ export type Token = ({
 } | {
   type: TokenType.number
   lexeme: string
+} | {
+  type: TokenType.indent
+  lexeme: number
+} | {
+  type: TokenType.newLine
 }
 ) & {
   line: number

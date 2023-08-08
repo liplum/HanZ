@@ -1,5 +1,4 @@
 // lexer.ts
-
 import { TokenType, Keyword, Token } from "./token"
 
 function isDigit(str: string): boolean {
@@ -45,6 +44,13 @@ export function lex(source: string) {
       return scanNumber()
     } else if (c === `"`) {
       return scanString()
+    } else if (c == "\n") {
+      const token: Token = { type: TokenType.newLine, line, pos, column }
+      line++
+      column = 0
+      return token
+    } else if (column == 1 && c === " ") {
+      return scanIndent()
     }
   }
 
@@ -63,7 +69,6 @@ export function lex(source: string) {
     return $num(source.substring(start, pos))
   }
 
-  // TODO: Escape characters
   function scanString(): Token {
     function scanEscape(): string {
       const char = advance()
@@ -97,6 +102,18 @@ export function lex(source: string) {
     return $str(chars.join(""))
   }
 
+  function scanIndent(): Token {
+    let indent = 1
+    while (peek() == " ") {
+      advance()
+      indent++
+    }
+    return $indent(indent)
+  }
+
+  function $indent(value: number): Token {
+    return { type: TokenType.indent, lexeme: value, line, pos, column }
+  }
 
   function $num(value: string): Token {
     return { type: TokenType.number, lexeme: value, line, pos, column }
@@ -117,6 +134,7 @@ export function lex(source: string) {
 
   function advance(): string {
     pos++
+    column++
     return source[pos - 1]
   }
   function peek(): string {
