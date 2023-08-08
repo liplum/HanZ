@@ -20,8 +20,9 @@ test("quoted string", t => {
 })
 
 test("escape string", t => {
-  const source = `"a\\\tb\\"c"`
+  const source = `"a\\tb\\"c"`
   const tokens = lex(source)
   t.is(tokens.length , 1)
+  t.is(tokens[0].lexeme , `a\tb"c`)
   t.pass()
 })

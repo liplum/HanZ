@@ -64,26 +64,39 @@ export function lex(source: string) {
   }
 
   // TODO: Escape characters
-  function scanString() {
-    // excluding quotes
-    const start = pos
-    while (peek() != "\"") {
-      if (peek() == "\n") {
-        line++
+  function scanString(): Token {
+    function scanEscape(): string {
+      const char = advance()
+      switch (char) {
+        case "n": return "\n"
+        case "r": return "\r"
+        case "t": return "\t"
+        case "\"": return "\""
+        case "\\": return "\\"
+        case "b": return "\b"
+        case "f": return "\b"
+        default: throw new LexError(`Invalid escape sequence: \\${char}`, line, pos)
       }
-      advance()
+
+    }
+    const chars: string[] = []
+    while (peek() != "\"") {
+      const char = advance()
+      if (char === "\\") {
+        const escapedChar = scanEscape()
+        chars.push(escapedChar)
+      } else {
+        chars.push(char)
+      }
     }
     if (isAtEnd()) {
-      throw new Error(`Unterminated string at line ${line}`)
+      throw new LexError("Unterminated string", line, pos)
     }
     // Consume closing quote
     advance()
-    return $str(source.substring(start, pos - 1))
+    return $str(chars.join(""))
   }
 
-  function scanEscape() {
-
-  }
 
   function $num(value: string): Token {
     return { type: TokenType.number, lexeme: value, line, pos, column }
@@ -121,5 +134,16 @@ export function lex(source: string) {
   }
   function isAtEnd(): boolean {
     return pos >= source.length
+  }
+}
+
+export class LexError extends Error {
+  line: number
+  pos: number
+  constructor(message: string, line: number, pos: number) {
+    super(message)
+    this.name = this.constructor.name
+    this.line = line
+    this.pos = pos
   }
 }
