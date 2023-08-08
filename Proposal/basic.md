@@ -12,14 +12,15 @@ To contains any keyword, a quote mark  (`` ' ``) is required to quote the variab
 
 The following keywords can't be used in identifier.
 
-| English | Chinese |
-|---------|---------|
-| if      | 如果    |
-| object  | 对象    |
-| while   | 当      |
-| until   | 直到    |
-| func    | 函数    |
-|         |         |
+| English  | Chinese |
+|----------|---------|
+| if       | 如果    |
+| object   | 对象    |
+| while    | 当      |
+| until    | 直到    |
+| func     | 函数    |
+| break    | 跳出    |
+| continue | 继续    |
 
 ## Operators
 
