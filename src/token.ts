@@ -20,7 +20,7 @@ export enum TokenType {
   init = ":=",
   vBar = "|",
   increase = "++",
-  decrease = "++",
+  decrease = "--",
   memberAccess = ".",
 }
 
@@ -44,7 +44,7 @@ export const en2Keyword = {
   continue: Keyword.continue,
 }
 
-export const zh2Keyword = {
+export const hanSimplified2Keyword = {
   如果: Keyword.if,
   对象: Keyword.object,
   当: Keyword.while,
@@ -55,11 +55,11 @@ export const zh2Keyword = {
 }
 
 export function isKeyword(identifier: string): boolean {
-  return Boolean(en2Keyword[identifier]) || Boolean(zh2Keyword[identifier])
+  return Boolean(en2Keyword[identifier]) || Boolean(hanSimplified2Keyword[identifier])
 }
 
 export function parseKeyword(identifier: string): Keyword | undefined {
-  return en2Keyword[identifier] ?? zh2Keyword[identifier]
+  return en2Keyword[identifier] ?? hanSimplified2Keyword[identifier]
 }
 
 export type Token = ({

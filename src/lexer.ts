@@ -1,14 +1,12 @@
 // lexer.ts
 import { TokenType, Keyword, Token, parseKeyword } from "./token.js"
 
-function isDigit(char: string): boolean {
-  const code = char.charCodeAt(0)
+function isDigitChar(code: number): boolean {
   // ASCII codes for '0' to '9'
   return code >= 48 && code <= 57
 }
 
-function isValidIdentifierChar(char: string): boolean {
-  const code = char.charCodeAt(0)
+function isValidIdentifierChar(code: number): boolean {
   return (
     (code >= 65 && code <= 90) || // A-Z
     (code >= 97 && code <= 122) || // a-z
@@ -17,6 +15,10 @@ function isValidIdentifierChar(char: string): boolean {
     (code >= 48 && code <= 57) || // 0-9
     (code >= 128 && code <= 1114111) // Unicode characters beyond ASCII
   ) && code !== 0x7684 // "的" is kept for member access
+}
+
+function isQuote(code: number): boolean {
+  return code === 34 || code == 0x201C || code == 0x201D
 }
 
 export function lex(source: string) {
@@ -33,57 +35,57 @@ export function lex(source: string) {
   return tokens
 
   function scan(): Token | undefined {
-    const c = peek()
-    const code = c.charCodeAt(0)
-    if (c == "+") {
+    const code = peekCode()
+
+    if (code === 43) { // "+"
       advance()
-      if (tryConsume("=")) return $op(TokenType.plusAssign)
-      else if (tryConsume("+")) return $op(TokenType.increase)
+      if (tryConsumeCode(61)) return $op(TokenType.plusAssign) // "="
+      else if (tryConsumeCode(43)) return $op(TokenType.increase) // "+"
       else return $op(TokenType.plus)
-    } else if (c == "-") {
+    } else if (code === 45) { // "-"
       advance()
-      if (tryConsume("=")) return $op(TokenType.minusAssign)
-      else if (tryConsume("-")) return $op(TokenType.decrease)
+      if (tryConsumeCode(61)) return $op(TokenType.minusAssign) // "="
+      else if (tryConsumeCode(45)) return $op(TokenType.decrease) // "-"
       else return $op(TokenType.minus)
-    } else if (c == "*") {
+    } else if (code === 42) { // "*"
       advance()
-      if (tryConsume("=")) return $op(TokenType.timesAssign)
-      else return $op(TokenType.times)
-    } else if (c == "/") {
+      if (tryConsumeCode(61)) return $op(TokenType.timesAssign) // "="
+      else return $op(TokenType.times) // *
+    } else if (code === 47) { // "/"
       advance()
-      if (tryConsume("=")) return $op(TokenType.divideAssign)
+      if (tryConsumeCode(61)) return $op(TokenType.divideAssign) // "="
       else return $op(TokenType.divide)
-    } else if (c == "%") {
+    } else if (code === 37) { // "%"
       advance()
-      if (tryConsume("=")) return $op(TokenType.moduloAssign)
+      if (tryConsumeCode(61)) return $op(TokenType.moduloAssign) // "="
       else return $op(TokenType.modulo)
-    } else if (c == "=") {
+    } else if (code === 61) { // "="
       advance()
-      if (tryConsume("=")) return $op(TokenType.equal)
+      if (tryConsumeCode(61)) return $op(TokenType.equal) // "="
       else return $op(TokenType.assign)
-    } else if (isDigit(c)) {
+    } else if (isDigitChar(code)) {
       return scanNumber()
-    } else if (c == `"`) {
+    } else if (isQuote(code)) { // `"`, left/right double quotation mark
       return scanString()
-    } else if (c == "\n") {
+    } else if (code === 10) { // "\n"
       advance()
       const token: Token = { type: TokenType.newLine, line, pos, column }
       line++
       column = 0
       return token
-    } else if (c == ":" || c == "：") {
+    } else if (code === 58 || code === 0xFF1A) { // ":", Fullwidth Colon
       advance()
-      if (tryConsume("=")) return $op(TokenType.init)
+      if (tryConsumeCode(61)) return $op(TokenType.init)
       else throw $err("TODO")
-    } else if (c == "|" || c == "｜") {
+    } else if (code === 124 || code === 0xFF5C) { // "|", Fullwidth Vertical Line
       advance()
       return $op(TokenType.vBar)
-    } else if (c == "." || c == "的") {
+    } else if (code === 46 || code === 0x7684) { // ".", "的"
       advance()
       return $op(TokenType.memberAccess)
-    } else if (isValidIdentifierChar(c)) {
+    } else if (isValidIdentifierChar(code)) {
       return scanIdentifier()
-    } else if (column == 0 && c == " ") {
+    } else if (column === 0 && code === 32) { // " "
       return scanIndent()
     } else {
       advance()
@@ -92,7 +94,7 @@ export function lex(source: string) {
 
   function scanIdentifier(): Token {
     const chars: string[] = []
-    while (isValidIdentifierChar(peek())) {
+    while (isValidIdentifierChar(peekCode())) {
       const char = advance()
       chars.push(char)
     }
@@ -104,13 +106,14 @@ export function lex(source: string) {
 
   function scanNumber(): Token {
     const start = pos
-    while (isDigit(peek())) {
+    while (isDigitChar(peekCode())) {
       advance()
     }
-    if (peek() == "." && isDigit(peekNext())) {
+    // "."
+    if (peekCode() == 0x002E && isDigitChar(peekNextCode())) {
       // go over dot
       advance()
-      while (isDigit(peek())) {
+      while (isDigitChar(peekCode())) {
         advance()
       }
     }
@@ -128,14 +131,14 @@ export function lex(source: string) {
         case "\\": return "\\"
         case "b": return "\b"
         case "f": return "\b"
-        default: throw $err(`Invalid escape sequence: \\${char}, code=${char.charCodeAt(0)}`)
+        default: throw $err(`Invalid escape sequence: \\${char}, code=${char}`)
       }
 
     }
     // Consume staring quote
     advance()
     const chars: string[] = []
-    while (peek() != "\"") {
+    while (!isQuote(peekCode())) {
       const char = advance()
       if (char === "\\") {
         const escapedChar = scanEscape()
@@ -207,6 +210,20 @@ export function lex(source: string) {
     pos++
     return true
   }
+  function peekCode(): number {
+    return source[pos]?.charCodeAt(0) ?? 0
+  }
+  function peekNextCode(): number {
+    return source[pos + 1]?.charCodeAt(0) ?? 0
+  }
+  function tryConsumeCode(expected: number): boolean {
+    if (peekCode() != expected) {
+      return false
+    }
+    pos++
+    return true
+  }
+
   function isAtEnd(): boolean {
     return pos >= source.length
   }
@@ -214,8 +231,11 @@ export function lex(source: string) {
 
 export class LexError extends Error {
   line: number
+
   column: number
+
   pos: number
+
   constructor(message: string, line: number, column: number, pos: number) {
     super(message)
     this.name = this.constructor.name

@@ -1,7 +1,5 @@
 import { lex } from "./lexer.js"
 
-const source = 
-`a = 10
-b = 5`
+const source = "5.14+16*3"
 const tokens = lex(source)
 console.log(tokens)
