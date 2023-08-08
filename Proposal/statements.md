@@ -152,11 +152,11 @@ BMI = BMI指数 身高:180 体重:75
   账户 继承自: 另一账户
     余额 = 另一账户的余额
 
-  // to deposit money
+  # to deposit money
   函数 存入: 金额
     余额 += 金额
    
-  // to withdraw money
+  # to withdraw money
   函数 取出: 金额
     余额 -= 金额
 ```

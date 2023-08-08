@@ -36,8 +36,10 @@ export function lex(source: string) {
 
   function scan(): Token | undefined {
     const code = peekCode()
-
-    if (code === 43) { // "+"
+    if (code === 35) { // "#"
+      ignoreComment()
+      return
+    } else if (code === 43) { // "+"
       advance()
       if (tryConsumeCode(61)) return $op(TokenType.plusAssign) // "="
       else if (tryConsumeCode(43)) return $op(TokenType.increase) // "+"
@@ -88,6 +90,12 @@ export function lex(source: string) {
     } else if (column === 0 && code === 32) { // " "
       return scanIndent()
     } else {
+      advance()
+    }
+  }
+
+  function ignoreComment(): void {
+    while (peekCode() != 10 && !isAtEnd()) { // "/n"
       advance()
     }
   }

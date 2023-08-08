@@ -32,9 +32,30 @@ test("identifier + new line", t => {
   const source =
     `foo = 10
 bar = 5`
+  const tokens = lex(source)
+  t.is(tokens.length, 7)
+  t.is(tokens[0].lexeme, "foo")
+  t.is(tokens[3].type, TokenType.newLine)
+  t.is(tokens[4].lexeme, "bar")
+})
+
+test("comment", t => {
+  const source =
+    `foo = 10 # assign to 10
+# nothing
+bar = 5 # assign to 5`
 const tokens = lex(source)
-t.is(tokens.length, 7)
+t.is(tokens.length, 8)
 t.is(tokens[0].lexeme, "foo")
 t.is(tokens[3].type, TokenType.newLine)
-t.is(tokens[4].lexeme, "bar")
+t.is(tokens[4].type, TokenType.newLine)
+t.is(tokens[5].lexeme, "bar")
+})
+
+test("large source", t => {
+  const source =
+    `
+
+  `
+  t.pass()
 })
