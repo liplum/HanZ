@@ -36,9 +36,14 @@ export function lex(source: string) {
 
   function scan(): Token | undefined {
     const code = peekCode()
-    if (code === 35) { // "#"
+    if (code === 32) {
+      if (column === 0) return scanIndent()
+      else return
+    } else if (code === 35) { // "#"
       ignoreComment()
       return
+    } else if (code === 44 || code === 0xFF0C) { // comma, Fullwidth comma
+      return $op(TokenType.comma)
     } else if (code === 43) { // "+"
       advance()
       if (tryConsumeCode(61)) return $op(TokenType.plusAssign) // "="
@@ -87,8 +92,6 @@ export function lex(source: string) {
       return $op(TokenType.memberAccess)
     } else if (isValidIdentifierChar(code)) {
       return scanIdentifier()
-    } else if (column === 0 && code === 32) { // " "
-      return scanIndent()
     } else {
       advance()
     }

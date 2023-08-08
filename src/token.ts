@@ -23,6 +23,7 @@ export enum TokenType {
   decrease = "--",
   memberAccess = ".",
   colon = ":",
+  comma = ",",
 }
 
 export enum Keyword {
