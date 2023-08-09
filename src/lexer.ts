@@ -212,10 +212,10 @@ export function lex(source: string) {
     return source[pos - 1]
   }
   function peek(): string {
-    return source[pos] ?? "\u0000"
+    return source[pos] ?? "\0"
   }
   function peekNext(): string {
-    return source[pos + 1] ?? "\u0000"
+    return source[pos + 1] ?? "\0"
   }
   function tryConsume(expected: string): boolean {
     if (peek() != expected) {
