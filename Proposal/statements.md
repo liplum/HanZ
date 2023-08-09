@@ -29,7 +29,7 @@ Example 2: To Declare multiple variables.
 Example 1: To declare a variable, named `次数`, and initialize it by `10`
 
 ```
-次数:=10
+次数:=10。
 ```
 
 ## Control Flow
@@ -57,7 +57,7 @@ Example 2: To use `Else-IF`.
 】又如果 值 / 2 == 1 【
   值 -= 1。
 】否则【
-  值 +=1。
+  值 += 1。
 】
 ```
 
@@ -70,7 +70,8 @@ Example 2: To use `Else-IF`.
 3. The loop should end once the condition is false.
 
 ```
-值 := 0
-每当 值 < 10
-  值++
+值 := 0。
+每当 值 < 10【
+  值 += 1。
+】
 ```

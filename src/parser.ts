@@ -1,4 +1,4 @@
-import { DeclType, HzDecl, HzFuncDecl, HzObjDecl, HzParamDecl, HzVarDecl } from "./declaration.js"
+import { DeclType, HzFuncDecl, HzObjDecl,HzVarDecl } from "./declaration.js"
 import { ExprType, HzExpr } from "./expr.js"
 import { LiteralType } from "./literal.js"
 import { HzBreakStatmt, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt, StatmtType } from "./statement.js"

@@ -24,7 +24,7 @@ module.exports = {
     "prefer-const": "warn",
     "comma-dangle": "off",
     "@typescript-eslint/comma-dangle": "off",
-    "no-unused-vars": "warn",
+    "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": "warn",
     "space-before-blocks": "warn",
     "@typescript-eslint/space-before-blocks": "warn",

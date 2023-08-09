@@ -100,10 +100,17 @@ export function lex(source: string) {
       const char = advance()
       chars.push(char)
     }
-    const id = chars.join("")
-    const keyword = parseKeyword(id)
-    if (keyword) tokens.push($keyword(keyword))
-    else tokens.push($identifier(id))
+    const identifier = chars.join("")
+    if (identifier === "_") {
+      tokens.push($token(TokenType.discard))
+    } else {
+      const keyword = parseKeyword(identifier)
+      if (keyword) {
+        tokens.push($keyword(keyword))
+      } else {
+        tokens.push($identifier(identifier))
+      }
+    }
   }
 
   function scanNumber(): void {

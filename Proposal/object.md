@@ -85,3 +85,18 @@ class 账户{
 # equivalent to method chaining below
 账户甲 存入: 799, 取出: 199
 ```
+
+## Functor
+
+Example 1. To calculate BMI.
+
+```
+对象 计算BMI指数【
+  函数 身高: _ 体重: _【
+    返回 体重 / (身高 * 身高)。
+  】
+】
+
+| BMI |
+BMI = 计算BMI指数 身高:180 体重:75。
+```

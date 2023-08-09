@@ -4,6 +4,7 @@ export enum TokenType {
   keyword = "keyword",
   identifier = "identifier",
   operator = "operator",
+  discard = "discard",
   eof = "eof",
   dot = ".",
   vBar = "|",
@@ -60,7 +61,7 @@ export function parseKeyword(identifier: string): Keyword | undefined {
   return en2Keyword[identifier] ?? hanSimplified2Keyword[identifier]
 }
 
-export type IndependentTokenType = TokenType.dot | TokenType.eof | TokenType.vBar | TokenType.lbracket | TokenType.rbracket | TokenType.colon | TokenType.comma
+export type IndependentTokenType = TokenType.dot | TokenType.eof | TokenType.vBar | TokenType.lbracket | TokenType.rbracket | TokenType.colon | TokenType.comma | TokenType.discard
 
 export type Token = ({
   type: IndependentTokenType
