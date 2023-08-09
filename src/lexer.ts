@@ -38,7 +38,10 @@ export function lex(source: string) {
     const code = peekCode()
     if (code === 32) {
       if (column === 0) return scanIndent()
-      else return
+      else {
+        advance()
+        return
+      }
     } else if (code === 35) { // "#"
       ignoreComment()
       return

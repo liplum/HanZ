@@ -90,3 +90,30 @@ export type Token = ({
   column: number
   pos: number
 }
+
+export enum BinaryOp {
+  plus = "+",
+  minus = "-",
+  times = "*",
+  divide = "/",
+  modulo = "%",
+  equal = "==",
+  memberAccess = ".",
+}
+
+export enum AssignOp {
+  plusAssign = "+=",
+  minusAssign = "-=",
+  timesAssign = "*=",
+  divideAssign = "/=",
+  moduloAssign = "%=",
+  assign = "=",
+  init = ":=",
+}
+
+export enum UnaryOp {
+  plus = "+",
+  minus = "-",
+  increase = "++",
+  decrease = "--",
+}
