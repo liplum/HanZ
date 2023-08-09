@@ -6,15 +6,8 @@ function isDigitChar(code: number): boolean {
   return code >= 48 && code <= 57
 }
 
-function isValidIdentifierChar(code: number): boolean {
-  return (
-    (code >= 65 && code <= 90) || // A-Z
-    (code >= 97 && code <= 122) || // a-z
-    code === 95 || // _
-    code === 24 || // $
-    (code >= 48 && code <= 57) || // 0-9
-    (code >= 128 && code <= 1114111) // Unicode characters beyond ASCII
-  ) && code !== 0x7684 // "的" is kept for member access
+function isValidIdentifierChar(char: string): boolean {
+  return /\p{ID_Continue}/u.test(char)
 }
 
 function isQuote(code: number): boolean {
@@ -24,80 +17,70 @@ function isQuote(code: number): boolean {
 export function lex(source: string) {
   let pos = 0
   let line = 0
-  let column = 0
-  const indentStack = [0]
   const tokens: Token[] = []
   while (pos < source.length) {
-    const token = scan()
-    if (token) {
-      tokens.push(token)
-    }
+    scan()
   }
-  tokens.push({ type: TokenType.eof, pos, line, column })
+  tokens.push({ type: TokenType.eof, pos, line })
   return tokens
 
-  function scan(): Token | undefined {
-    const code = peekCode()
-    if (code === 32 || code === 9) { // " ", "\t"
-      if (column === 0) {
-        scanIndent()
-      } else {
-        advance()
-        return
+  function scan(): void {
+    const char = peek()
+    const code = char.charCodeAt(0)
+    if (code === 32 || code === 9 || code === 10) { // " ", "\t", "\n"
+      advance()
+      if (code === 10) {
+        line++
       }
-    } else if (code === 35) { // "#"
-      ignoreComment()
-      return
+    } else if (code === 91 || code === 0x3010) { // "[", "【"
+      advance()
+      tokens.push($op(TokenType.lbracket))
+    } else if (code === 93 || code === 0x3011) { // "]", "】"
+      advance()
+      tokens.push($op(TokenType.rbracket))
+    } else if (code === 46 || code === 0x3002) { // ".", "。"
+      advance()
+      tokens.push($op(TokenType.dot))
     } else if (code === 44 || code === 0xFF0C) { // comma, Fullwidth comma
-      return $op(TokenType.comma)
+      tokens.push($op(TokenType.comma))
     } else if (code === 43) { // "+"
       advance()
-      if (tryConsumeCode(61)) return $op(TokenType.plusAssign) // "="
-      else if (tryConsumeCode(43)) return $op(TokenType.increase) // "+"
-      else return $op(TokenType.plus)
+      if (tryConsumeCode(61)) tokens.push($op(TokenType.plusAssign)) // "="
+      else tokens.push($op(TokenType.plus))
     } else if (code === 45) { // "-"
       advance()
-      if (tryConsumeCode(61)) return $op(TokenType.minusAssign) // "="
-      else if (tryConsumeCode(45)) return $op(TokenType.decrease) // "-"
-      else return $op(TokenType.minus)
+      if (tryConsumeCode(61)) tokens.push($op(TokenType.minusAssign)) // "="
+      else tokens.push($op(TokenType.minus))
     } else if (code === 42) { // "*"
       advance()
-      if (tryConsumeCode(61)) return $op(TokenType.timesAssign) // "="
-      else return $op(TokenType.times) // *
+      if (tryConsumeCode(61)) tokens.push($op(TokenType.timesAssign)) // "="
+      else tokens.push($op(TokenType.times)) // *
     } else if (code === 47) { // "/"
       advance()
-      if (tryConsumeCode(61)) return $op(TokenType.divideAssign) // "="
-      else return $op(TokenType.divide)
+      if (tryConsumeCode(61)) tokens.push($op(TokenType.divideAssign)) // "="
+      else if (tryConsumeCode(47)) ignoreComment()
+      else tokens.push($op(TokenType.divide))
     } else if (code === 37) { // "%"
       advance()
-      if (tryConsumeCode(61)) return $op(TokenType.moduloAssign) // "="
-      else return $op(TokenType.modulo)
+      if (tryConsumeCode(61)) tokens.push($op(TokenType.moduloAssign)) // "="
+      else tokens.push($op(TokenType.modulo))
     } else if (code === 61) { // "="
       advance()
-      if (tryConsumeCode(61)) return $op(TokenType.equal) // "="
-      else return $op(TokenType.assign)
+      if (tryConsumeCode(61)) tokens.push($op(TokenType.equal)) // "="
+      else tokens.push($op(TokenType.assign))
     } else if (isDigitChar(code)) {
-      return scanNumber()
+      scanNumber()
     } else if (isQuote(code)) { // `"`, left/right double quotation mark
-      return scanString()
-    } else if (code === 10) { // "\n"
-      advance()
-      const token: Token = { type: TokenType.newLine, line, pos, column }
-      line++
-      column = 0
-      return token
+      scanString()
     } else if (code === 58 || code === 0xFF1A) { // ":", Fullwidth Colon
       advance()
-      if (tryConsumeCode(61)) return $op(TokenType.init)
-      else return $op(TokenType.colon)
+      if (tryConsumeCode(61)) tokens.push($op(TokenType.init))
+      else tokens.push($op(TokenType.colon))
     } else if (code === 124 || code === 0xFF5C) { // "|", Fullwidth Vertical Line
       advance()
-      return $op(TokenType.vBar)
-    } else if (code === 46 || code === 0x7684) { // ".", "的"
-      advance()
-      return $op(TokenType.memberAccess)
-    } else if (isValidIdentifierChar(code)) {
-      return scanIdentifier()
+      tokens.push($op(TokenType.vBar))
+    } else if (isValidIdentifierChar(char)) {
+      scanIdentifier()
     } else {
       advance()
     }
@@ -109,19 +92,21 @@ export function lex(source: string) {
     }
   }
 
-  function scanIdentifier(): Token {
+  function scanIdentifier(): void {
     const chars: string[] = []
-    while (isValidIdentifierChar(peekCode())) {
+    const initial = advance()
+    chars.push(initial)
+    while (isValidIdentifierChar(peek())) {
       const char = advance()
       chars.push(char)
     }
     const id = chars.join("")
     const keyword = parseKeyword(id)
-    if (keyword) return $keyword(keyword)
-    else return $identifier(id)
+    if (keyword) tokens.push($keyword(keyword))
+    else tokens.push($identifier(id))
   }
 
-  function scanNumber(): Token {
+  function scanNumber(): void {
     const start = pos
     while (isDigitChar(peekCode())) {
       advance()
@@ -134,10 +119,10 @@ export function lex(source: string) {
         advance()
       }
     }
-    return $num(source.substring(start, pos))
+    tokens.push($num(source.substring(start, pos)))
   }
 
-  function scanString(): Token {
+  function scanString(): void {
     function scanEscape(): string {
       const char = advance()
       switch (char) {
@@ -169,70 +154,39 @@ export function lex(source: string) {
     }
     // Consume closing quote
     advance()
-    return $str(chars.join(""))
-  }
-
-  function scanIndent() {
-    let indent = 0
-    for (; ;) {
-      const code = peekCode()
-      if (code === 32) {// " "
-        indent++
-        advance()
-      } else if (code === 9) {//"\t"
-        indent += 4
-        advance()
-      } else {
-        break
-      }
-    }
-
-    if (indent > indentStack[indentStack.length - 1]) {
-      indentStack.push(indent)
-      tokens.push($indent(indent))
-    } else if (indent < indentStack[indentStack.length - 1]) {
-      while (indent < indentStack[indentStack.length - 1]) {
-        indentStack.pop()
-        tokens.push($dedent(indentStack[indentStack.length - 1]))
-      }
-    }
+    tokens.push($str(chars.join("")))
   }
 
   function $err(msg: string) {
-    return new LexError(msg, line, column, pos)
-  }
-
-  function $indent(size: number): Token {
-    return { type: TokenType.indent, size, line, pos, column }
-  }
-
-  function $dedent(size: number): Token {
-    return { type: TokenType.dedent, size, line, pos, column }
+    return new LexError(msg, line, pos)
   }
 
   function $num(value: string): Token {
-    return { type: TokenType.number, lexeme: value, line, pos, column }
+    return { type: TokenType.number, lexeme: value, line, pos }
   }
 
   function $str(lexeme: string): Token {
-    return { type: TokenType.string, lexeme, line, pos, column }
+    return { type: TokenType.string, lexeme, line, pos }
   }
 
   function $keyword(lexeme: Keyword): Token {
-    return { type: TokenType.keyword, lexeme, line, pos, column }
+    return { type: TokenType.keyword, lexeme, line, pos }
   }
 
   function $op(operator: TokenType): Token {
-    return { type: operator, lexeme: operator, line, pos, column }
+    return { type: operator, lexeme: operator, line, pos }
   }
 
   function $identifier(lexeme: string): Token {
-    return { type: TokenType.identifier, lexeme, line, pos, column }
+    return { type: TokenType.identifier, lexeme, line, pos }
+  }
+
+  function $dot(): Token {
+    return { type: TokenType.dot, line, pos }
   }
 
   function advance(): string {
     pos++
-    column++
     return source[pos - 1]
   }
   function peek(): string {
@@ -274,11 +228,10 @@ export class LexError extends Error {
 
   pos: number
 
-  constructor(message: string, line: number, column: number, pos: number) {
+  constructor(message: string, line: number, pos: number) {
     super(message)
     this.name = this.constructor.name
     this.line = line
-    this.column = column
     this.pos = pos
   }
 }

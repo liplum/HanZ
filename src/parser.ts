@@ -1,7 +1,7 @@
 import { DeclType, HzFuncDecl, HzObjDecl } from "./declaration.js"
 import { ExprType, HzExpr } from "./expr.js"
 import { LiteralType } from "./literal.js"
-import { HzIfStatmt, HzUntilStatmt, HzWhileStatmt, StatmtType } from "./statement.js"
+import { HzIfStatmt, HzStatmt, HzUntilStatmt, HzWhileStatmt, StatmtType } from "./statement.js"
 import { Keyword, Token, TokenType } from "./token.js"
 
 export function parser(tokens: Token[]) {
@@ -25,16 +25,23 @@ export function parser(tokens: Token[]) {
     }
   }
 
+  function parseBlock(): HzStatmt[] {
+    const statmts = []
+
+    return statmts
+  }
+
   function parseExpr(): HzExpr {
     // TODO:
     return { type: ExprType.literal, value: { type: LiteralType.string, value: "" } }
   }
-
+  function parseStatmt(): HzStatmt | undefined {
+    return
+  }
   function parseIf(): HzIfStatmt | undefined {
     // consume `if`
     advance()
     const condition = parseExpr()
-    tryConsume(TokenType.newLine)
     return
   }
   function parseWhile(): HzWhileStatmt | undefined {

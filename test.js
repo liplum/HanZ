@@ -30,46 +30,54 @@ test("[lexer] escape string", t => {
 
 test("[lexer] identifier + new line", t => {
   const source =
-    `foo = 10
-bar = 5`
+    `foo = 10.
+bar = 5.`
   const tokens = lex(source)
-  t.is(tokens.length, 8)
+  t.is(tokens.length, 9)
   t.is(tokens[0].lexeme, "foo")
-  t.is(tokens[3].type, TokenType.newLine)
   t.is(tokens[4].lexeme, "bar")
 })
 
 test("[lexer] comment", t => {
   const source =
-    `foo = 10 # assign to 10
-# nothing
-bar = 5 # assign to 5`
+    `foo = 10. // assign to 10
+// nothing
+bar = 5. // assign to 5`
   const tokens = lex(source)
   t.is(tokens.length, 9)
   t.is(tokens[0].lexeme, "foo")
-  t.is(tokens[3].type, TokenType.newLine)
-  t.is(tokens[4].type, TokenType.newLine)
-  t.is(tokens[5].lexeme, "bar")
+  t.is(tokens[3].type, TokenType.dot)
+  t.is(tokens[4].lexeme, "bar")
+  t.is(tokens[7].type, TokenType.dot)
 })
 
 test("[lexer] large source", t => {
   const source =
-    `对象 账户
+    `
+对象 账户【
   | 余额 |
 
-  账户 新建
-    余额 = 0
+  账户 新建【
+    余额 = 0。
+  】
 
-  账户 继承自: 另一账户
-    余额 = 另一账户的余额
+  账户 继承自: 另一账户【
+    自己 余额 = 另一账户 余额。
+  】
 
-  # to deposit money
-  函数 存入: 金额
-    余额 += 金额
+  // to deposit money
+  函数 存入: 金额【
+    余额 += 金额。
+    返回 自己。
+  】
     
-  # to withdraw money
-  函数 取出: 金额
-    余额 -= 金额`
+  // to withdraw money
+  函数 取出: 金额【
+    余额 -= 金额。
+    返回 自己。
+  】
+】
+`
   const tokens = lex(source)
-  t.is(tokens.length, 57)
+  t.is(tokens.length, 54)
 })

@@ -5,9 +5,9 @@
 An **identifier** is a name given to a variable, function, or other programming construct.
 Identifiers can only consist of alphabetic characters and Chinese characters. Examples of valid identifiers are `num` and `数`.
 
-However, the Chinese character `的` is reserved for member access on objects and cannot be used as part of an identifier's name.
+## Line Ending
 
-To include keywords as identifiers, you need to enclose them in single quotes (`'`). For instance, `'它的结果'` is a valid way to use the keyword `它的结果` as an identifier.
+Every line of code should conclude with a dot character (`.`) or its Chinese equivalent (`。`).
 
 ## Keyword
 
@@ -22,6 +22,8 @@ The following keywords can't be used in identifier.
 | func     | 函数    |
 | break    | 中断    |
 | continue | 继续    |
+| self     | 自己    |
+| return   | 返回    |
 
 ## Operators
 
@@ -32,7 +34,6 @@ Operators are symbols that perform operations on operands. Here are the operator
 - **Multiplication**: `*`
 - **Division**: `/`
 - **Parentheses**: `()`
-- **Member Access**: `.` and `的`
 - **Assignment**: `=`
 - **Equality**: `==`
 - **Greater Than**: `>`
@@ -43,11 +44,11 @@ Operators are symbols that perform operations on operands. Here are the operator
 ## Comments
 
 Comments provide explanatory notes within your code.
-Comments are initiated with a hash symbol (`#`).
+Comments are initiated with two slashes (`//`).
 And they are ignored by the lexer, which means they don't affect the program's execution.
 
 Here's an example of a comment:
 
 ```python
-# This is a comment explaining the purpose of the following code.
+// This is a comment explaining the purpose of the following code.
 ```

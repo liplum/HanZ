@@ -3,9 +3,8 @@ export enum TokenType {
   string = "string",
   keyword = "keyword",
   identifier = "identifier",
-  indent = "indent",
-  dedent = "dedent",
-  newLine = "new-line",
+  eof = "eof",
+  dot = ".",
   plus = "+",
   minus = "-",
   times = "*",
@@ -20,12 +19,10 @@ export enum TokenType {
   assign = "=",
   init = ":=",
   vBar = "|",
-  increase = "++",
-  decrease = "--",
-  memberAccess = ".",
   colon = ":",
   comma = ",",
-  eof = "eof",
+  lbracket = "[",
+  rbracket = "]",
 }
 
 export enum Keyword {
@@ -36,6 +33,8 @@ export enum Keyword {
   func = "func",
   break = "break",
   continue = "continue",
+  self = "self",
+  return = "return",
 }
 
 export const en2Keyword = {
@@ -46,6 +45,8 @@ export const en2Keyword = {
   func: Keyword.func,
   break: Keyword.break,
   continue: Keyword.continue,
+  self: Keyword.self,
+  return: Keyword.return,
 }
 
 export const hanSimplified2Keyword = {
@@ -56,6 +57,8 @@ export const hanSimplified2Keyword = {
   函数: Keyword.func,
   中断: Keyword.break,
   继续: Keyword.continue,
+  自己: Keyword.self,
+  返回: Keyword.return,
 }
 
 export function isKeyword(identifier: string): boolean {
@@ -82,16 +85,12 @@ export type Token = ({
   type: TokenType.number
   lexeme: string
 } | {
-  type: TokenType.indent | TokenType.dedent
-  size: number
-} | {
-  type: TokenType.newLine
+  type: TokenType.dot
 } | {
   type: TokenType.eof
 }
 ) & {
   line: number
-  column: number
   pos: number
 }
 
@@ -118,6 +117,4 @@ export enum AssignOp {
 export enum UnaryOp {
   plus = "+",
   minus = "-",
-  increase = "++",
-  decrease = "--",
 }
