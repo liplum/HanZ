@@ -33,6 +33,7 @@ export function lex(source: string) {
       tokens.push(token)
     }
   }
+  tokens.push({ type: TokenType.eof, pos, line, column })
   return tokens
 
   function scan(): Token | undefined {

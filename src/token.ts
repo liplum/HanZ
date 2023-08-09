@@ -25,6 +25,7 @@ export enum TokenType {
   memberAccess = ".",
   colon = ":",
   comma = ",",
+  eof = "eof",
 }
 
 export enum Keyword {
@@ -85,6 +86,8 @@ export type Token = ({
   size: number
 } | {
   type: TokenType.newLine
+} | {
+  type: TokenType.eof
 }
 ) & {
   line: number

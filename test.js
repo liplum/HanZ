@@ -5,7 +5,7 @@ import { TokenType } from "./dist/token.js"
 test("[lexer] simple expr", t => {
   const source = "5.14+16*3"
   const tokens = lex(source)
-  t.is(tokens.length, 5)
+  t.is(tokens.length, 6)
   t.is(tokens[0].lexeme, "5.14")
   t.is(tokens[1].lexeme, "+")
   t.is(tokens[2].lexeme, "16")
@@ -16,14 +16,14 @@ test("[lexer] simple expr", t => {
 test("[lexer] quoted string", t => {
   const source = `"hello, world!"`
   const tokens = lex(source)
-  t.is(tokens.length, 1)
+  t.is(tokens.length, 2)
   t.is(tokens[0].lexeme, "hello, world!")
 })
 
 test("[lexer] escape string", t => {
   const source = `"a\\tb\\"c"`
   const tokens = lex(source)
-  t.is(tokens.length, 1)
+  t.is(tokens.length, 2)
   t.is(tokens[0].lexeme, `a\tb"c`)
   t.pass()
 })
@@ -33,7 +33,7 @@ test("[lexer] identifier + new line", t => {
     `foo = 10
 bar = 5`
   const tokens = lex(source)
-  t.is(tokens.length, 7)
+  t.is(tokens.length, 8)
   t.is(tokens[0].lexeme, "foo")
   t.is(tokens[3].type, TokenType.newLine)
   t.is(tokens[4].lexeme, "bar")
@@ -45,7 +45,7 @@ test("[lexer] comment", t => {
 # nothing
 bar = 5 # assign to 5`
   const tokens = lex(source)
-  t.is(tokens.length, 8)
+  t.is(tokens.length, 9)
   t.is(tokens[0].lexeme, "foo")
   t.is(tokens[3].type, TokenType.newLine)
   t.is(tokens[4].type, TokenType.newLine)
@@ -71,5 +71,5 @@ test("[lexer] large source", t => {
   函数 取出: 金额
     余额 -= 金额`
   const tokens = lex(source)
-  t.is(tokens.length, 56)
+  t.is(tokens.length, 57)
 })
