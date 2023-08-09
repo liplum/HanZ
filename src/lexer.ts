@@ -25,6 +25,7 @@ export function lex(source: string) {
   let pos = 0
   let line = 0
   let column = 0
+  const indentStack = [0]
   const tokens: Token[] = []
   while (pos < source.length) {
     const token = scan()
@@ -36,9 +37,10 @@ export function lex(source: string) {
 
   function scan(): Token | undefined {
     const code = peekCode()
-    if (code === 32) {
-      if (column === 0) return scanIndent()
-      else {
+    if (code === 32 || code === 9) { // " ", "\t"
+      if (column === 0) {
+        scanIndent()
+      } else {
         advance()
         return
       }
@@ -169,13 +171,30 @@ export function lex(source: string) {
     return $str(chars.join(""))
   }
 
-  function scanIndent(): Token {
+  function scanIndent() {
     let indent = 0
-    while (peek() == " ") {
-      advance()
-      indent++
+    for (; ;) {
+      const code = peekCode()
+      if (code === 32) {// " "
+        indent++
+        advance()
+      } else if (code === 9) {//"\t"
+        indent += 4
+        advance()
+      } else {
+        break
+      }
     }
-    return $indent(indent)
+
+    if (indent > indentStack[indentStack.length - 1]) {
+      indentStack.push(indent)
+      tokens.push($indent(indent))
+    } else if (indent < indentStack[indentStack.length - 1]) {
+      while (indent < indentStack[indentStack.length - 1]) {
+        indentStack.pop()
+        tokens.push($dedent(indentStack[indentStack.length - 1]))
+      }
+    }
   }
 
   function $err(msg: string) {
@@ -184,6 +203,10 @@ export function lex(source: string) {
 
   function $indent(size: number): Token {
     return { type: TokenType.indent, size, line, pos, column }
+  }
+
+  function $dedent(size: number): Token {
+    return { type: TokenType.dedent, size, line, pos, column }
   }
 
   function $num(value: string): Token {

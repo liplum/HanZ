@@ -54,24 +54,22 @@ bar = 5 # assign to 5`
 
 test("[lexer] large source", t => {
   const source =
-    `
-对象 账户
-| 余额 |
+    `对象 账户
+  | 余额 |
 
-账户 新建
-  余额 = 0
+  账户 新建
+    余额 = 0
 
-账户 继承自: 另一账户
-  余额 = 另一账户的余额
+  账户 继承自: 另一账户
+    余额 = 另一账户的余额
 
-# to deposit money
-函数 存入: 金额
-  余额 += 金额
-  
-# to withdraw money
-函数 取出: 金额
-  余额 -= 金额
-`
+  # to deposit money
+  函数 存入: 金额
+    余额 += 金额
+    
+  # to withdraw money
+  函数 取出: 金额
+    余额 -= 金额`
   const tokens = lex(source)
-  t.is(tokens.length, 55)
+  t.is(tokens.length, 56)
 })

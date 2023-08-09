@@ -90,6 +90,7 @@ Example 2: To use `Else-IF`.
 1. The `func`/`函数` keyword is used to declare a function.
 2. The last line of code is the return value.
 3. Parameters are defied after the name of function and started by a colon `:`.
+4. **Return**: Use ``
 
 Example 1: To calculate a square.
 
@@ -155,17 +156,40 @@ BMI = BMI指数 身高:180 体重:75
   # to deposit money
   函数 存入: 金额
     余额 += 金额
+    ^自身
    
   # to withdraw money
   函数 取出: 金额
     余额 -= 金额
+    ^自身
 ```
 
 ### Method Call
 
 ```
-账户甲:= 账户 新建
+账户甲 := 账户 新建
 
 账户甲 存入: 799
 账户甲 取出: 199
+# equivalent to method chaining below
+账户甲 存入: 799, 取出: 199
+```
+
+## Extension Function
+
+TODO:
+
+```
+货币 对象
+  | 币种[文本], 数额[数] |
+  货币 :币种 币种[文本] :数额 数额[数]
+    .币种 = 币种
+    .数额 = 数额
+
+扩展 数
+  函数 元
+    ^货币 币种:"CNY" 数额:自身
+
+账户甲 := 账户 新建
+账户甲 存入: 799 元, 取出: 199 元
 ```

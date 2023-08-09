@@ -4,6 +4,7 @@ export enum TokenType {
   keyword = "keyword",
   identifier = "identifier",
   indent = "indent",
+  dedent = "dedent",
   newLine = "new-line",
   plus = "+",
   minus = "-",
@@ -80,7 +81,7 @@ export type Token = ({
   type: TokenType.number
   lexeme: string
 } | {
-  type: TokenType.indent
+  type: TokenType.indent | TokenType.dedent
   size: number
 } | {
   type: TokenType.newLine
