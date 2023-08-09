@@ -3,8 +3,8 @@
 ## Variable Declaration
 
 1. Variable can be declared before being used.
-2. To declare variables, the vertical bar should be used to quote them.
-3. The comma can be used to declare multiple variables in the same place.
+2. To declare variables, enclose them in vertical bars.
+3. To declare multiple variables, separate them by space.
 
 Example 1: To declare a variable, named `结果`
 
@@ -15,7 +15,7 @@ Example 1: To declare a variable, named `结果`
 Example 2: To Declare multiple variables.
 
 ```
-| 结果，误差 |
+| 结果 误差 |
 // the same as the following code
 | 结果 |
 | 误差 |
@@ -65,176 +65,12 @@ Example 2: To use `Else-IF`.
 
 ### While
 
-1. The `while`/`当` keyword is ued to declare a while-loop.
+1. The `while`/`每当` keyword is ued to declare a while-loop.
 2. The condition goes after the keyword.
 3. The loop should end once the condition is false.
 
 ```
 值 := 0
-当 值 < 10
+每当 值 < 10
   值++
-```
-
-### Until
-
-1. The `until`/`直到` keyword is used to declare an until-loop.
-2. The condition goes after the keyword.
-3. The loop should end once the condition is true.
-
-```
-值 := 10
-直到 值 <= 0
-  值--
-```
-
-## Function Declaration
-
-1. The `func`/`函数` keyword is used to declare a function.
-2. The last line of code is the return value.
-3. Parameters are defied after the name of function and started by a colon `:`.
-4. **Return**: Use ``
-
-Example 1: To calculate a square.
-
-```
-函数 乘方 :值
-  值 * 值
-```
-
-Example 2. To calculate BMI.
-
-```
-函数 BMI指数 :身高 :体重
-  体重 / (身高 * 身高)
-```
-
-## Function Call
-
-1.
-
-```
-| BMI |
-BMI = BMI指数 身高:180 体重:75
-```
-
-## Object
-
-### Object Declaration
-
-1. The `object`/`对象` keyword is used to declare an object.
-2. Constructors are declared by the name of object, and should be named.
-3. Fields are declared in the object-level, and can be initialized in the constructors.
-
-```
-对象 账户
-  | 余额 |
-  
-  账户 新建
-    余额 = 0
-  
-  账户 继承自: 另一账户
-    余额 = 另一账户的余额
-```
-
-### Instantiation
-
-```
-账户甲:= 账户 新建
-账户乙:= 账户 继承自: 账户甲
-```
-
-### Method Declaration
-
-```
-对象 账户【
-  | 余额 |
-
-  账户 新建【
-    余额 = 0。
-  】
-
-  账户 继承自: 另一账户【
-    #余额 = 另一账户 余额。
-  】
-
-  // to deposit money
-  函数 存入: 金额【
-    余额 += 金额。
-    返回 自己。
-  】
-   
-  // to withdraw money
-  函数 取出: 金额【
-    余额 -= 金额。
-    返回 自己。
-  】
-】
-```
-
-```js
-class 账户{
-  static 新建(){
-    const obj = new 账户()
-    obj.余额 = 0
-    return obj
-  }
-  static 继承自(另一账户){
-    const obj = new 账户()
-    obj.余额 = 另一账户.余额
-    return obj
-  }
-  存入(金额){
-    this.余额 += 金额
-    return this
-  }
-  取出(金额){
-    this.余额 -= 金额
-    return this
-  }
-}
-```
-
-### Method Call
-
-```
-账户甲 := 账户 新建
-
-账户甲 存入: 799
-账户甲 取出: 199
-# equivalent to method chaining below
-账户甲 存入: 799, 取出: 199
-```
-
-## Extension Function
-
-TODO:
-
-```
-对象 货币【
-  | 币种#文本, 数额#数 |
-  货币 :币种#文本 :数额#数【
-    #币种 = 币种。
-    #数额 = 数额。
-  】
-】
-
-扩展 数【
-  函数 元【
-    返回 货币 币种:"CNY" 数额:自身。
-  】
-】
-
-账户甲 := 账户 新建。
-账户甲 存入: 799 元, 取出: 199 元。
-```
-
-```js
-class 货币{
-  static init$币种$数额(币种,数额){
-    const obj = new 货币()
-    obj.币种=币种
-    obj.数额=数额 
-    return obj
-  }
-}
 ```

@@ -12,7 +12,7 @@ export type HzDecl = HzVarDecl | HzFuncDecl | HzParamDecl
 
 export interface HzVarDecl {
   type: DeclType.var
-  names: string[]
+  vars: string[]
 }
 
 export interface HzFuncDecl {
@@ -30,7 +30,7 @@ export interface HzParamDecl {
 export interface HzObjDecl {
   type: DeclType.obj
   name: string
-  fieldDecls: HzVarDecl[]
-  methodDecls: HzFuncDecl[]
+  fields: HzVarDecl[]
+  methods: HzFuncDecl[]
 }
 

@@ -7,9 +7,9 @@ test("[lexer] simple expr", t => {
   const tokens = lex(source)
   t.is(tokens.length, 6)
   t.is(tokens[0].lexeme, "5.14")
-  t.is(tokens[1].lexeme, "+")
+  t.is(tokens[1].operator, "+")
   t.is(tokens[2].lexeme, "16")
-  t.is(tokens[3].lexeme, "*")
+  t.is(tokens[3].operator, "*")
   t.is(tokens[4].lexeme, "3")
 })
 

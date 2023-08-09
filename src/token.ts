@@ -3,21 +3,9 @@ export enum TokenType {
   string = "string",
   keyword = "keyword",
   identifier = "identifier",
+  operator = "operator",
   eof = "eof",
   dot = ".",
-  plus = "+",
-  minus = "-",
-  times = "*",
-  divide = "/",
-  modulo = "%",
-  plusAssign = "+=",
-  minusAssign = "-=",
-  timesAssign = "*=",
-  divideAssign = "/=",
-  moduloAssign = "%=",
-  equal = "==",
-  assign = "=",
-  init = ":=",
   vBar = "|",
   colon = ":",
   comma = ",",
@@ -27,9 +15,10 @@ export enum TokenType {
 
 export enum Keyword {
   if = "if",
+  else = "else",
+  elif = "elif",
   object = "object",
   while = "while",
-  until = "until",
   func = "func",
   break = "break",
   continue = "continue",
@@ -39,9 +28,10 @@ export enum Keyword {
 
 export const en2Keyword = {
   if: Keyword.if,
+  else: Keyword.else,
+  elif: Keyword.elif,
   object: Keyword.object,
   while: Keyword.while,
-  until: Keyword.until,
   func: Keyword.func,
   break: Keyword.break,
   continue: Keyword.continue,
@@ -51,9 +41,10 @@ export const en2Keyword = {
 
 export const hanSimplified2Keyword = {
   如果: Keyword.if,
+  否则: Keyword.else,
+  又如果: Keyword.elif,
   对象: Keyword.object,
   当: Keyword.while,
-  直到: Keyword.until,
   函数: Keyword.func,
   中断: Keyword.break,
   继续: Keyword.continue,
@@ -69,12 +60,13 @@ export function parseKeyword(identifier: string): Keyword | undefined {
   return en2Keyword[identifier] ?? hanSimplified2Keyword[identifier]
 }
 
+export type IndependentTokenType = TokenType.dot | TokenType.eof | TokenType.vBar | TokenType.lbracket | TokenType.rbracket | TokenType.colon | TokenType.comma
+
 export type Token = ({
-  type: TokenType
-  lexeme: string
+  type: IndependentTokenType
 } | {
   type: TokenType.keyword
-  lexeme: Keyword
+  keyword: Keyword
 } | {
   type: TokenType.identifier
   lexeme: string
@@ -82,12 +74,11 @@ export type Token = ({
   type: TokenType.string
   lexeme: string
 } | {
+  type: TokenType.operator
+  operator: Operator
+} | {
   type: TokenType.number
   lexeme: string
-} | {
-  type: TokenType.dot
-} | {
-  type: TokenType.eof
 }
 ) & {
   line: number
@@ -101,7 +92,10 @@ export enum BinaryOp {
   divide = "/",
   modulo = "%",
   equal = "==",
-  memberAccess = ".",
+  gt = ">",
+  lt = "<",
+  gte = ">=",
+  lte = "<=",
 }
 
 export enum AssignOp {
@@ -118,3 +112,5 @@ export enum UnaryOp {
   plus = "+",
   minus = "-",
 }
+
+export type Operator = UnaryOp | BinaryOp | AssignOp

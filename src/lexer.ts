@@ -1,5 +1,5 @@
 // lexer.ts
-import { TokenType, Keyword, Token, parseKeyword } from "./token.js"
+import { TokenType, Keyword, Token, parseKeyword, Operator, BinaryOp, AssignOp, IndependentTokenType } from "./token.js"
 
 function isDigitChar(code: number): boolean {
   // ASCII codes for '0' to '9'
@@ -34,51 +34,51 @@ export function lex(source: string) {
       }
     } else if (code === 91 || code === 0x3010) { // "[", "【"
       advance()
-      tokens.push($op(TokenType.lbracket))
+      tokens.push($token(TokenType.lbracket))
     } else if (code === 93 || code === 0x3011) { // "]", "】"
       advance()
-      tokens.push($op(TokenType.rbracket))
+      tokens.push($token(TokenType.rbracket))
     } else if (code === 46 || code === 0x3002) { // ".", "。"
       advance()
-      tokens.push($op(TokenType.dot))
+      tokens.push($dot())
     } else if (code === 44 || code === 0xFF0C) { // comma, Fullwidth comma
-      tokens.push($op(TokenType.comma))
+      tokens.push($token(TokenType.comma))
     } else if (code === 43) { // "+"
       advance()
-      if (tryConsumeCode(61)) tokens.push($op(TokenType.plusAssign)) // "="
-      else tokens.push($op(TokenType.plus))
+      if (tryConsumeCode(61)) tokens.push($op(AssignOp.plusAssign)) // "="
+      else tokens.push($op(BinaryOp.plus))
     } else if (code === 45) { // "-"
       advance()
-      if (tryConsumeCode(61)) tokens.push($op(TokenType.minusAssign)) // "="
-      else tokens.push($op(TokenType.minus))
+      if (tryConsumeCode(61)) tokens.push($op(AssignOp.minusAssign)) // "="
+      else tokens.push($op(BinaryOp.minus))
     } else if (code === 42) { // "*"
       advance()
-      if (tryConsumeCode(61)) tokens.push($op(TokenType.timesAssign)) // "="
-      else tokens.push($op(TokenType.times)) // *
+      if (tryConsumeCode(61)) tokens.push($op(AssignOp.timesAssign)) // "="
+      else tokens.push($op(BinaryOp.times)) // *
     } else if (code === 47) { // "/"
       advance()
-      if (tryConsumeCode(61)) tokens.push($op(TokenType.divideAssign)) // "="
+      if (tryConsumeCode(61)) tokens.push($op(AssignOp.divideAssign)) // "="
       else if (tryConsumeCode(47)) ignoreComment()
-      else tokens.push($op(TokenType.divide))
+      else tokens.push($op(BinaryOp.divide))
     } else if (code === 37) { // "%"
       advance()
-      if (tryConsumeCode(61)) tokens.push($op(TokenType.moduloAssign)) // "="
-      else tokens.push($op(TokenType.modulo))
+      if (tryConsumeCode(61)) tokens.push($op(AssignOp.moduloAssign)) // "="
+      else tokens.push($op(BinaryOp.modulo))
     } else if (code === 61) { // "="
       advance()
-      if (tryConsumeCode(61)) tokens.push($op(TokenType.equal)) // "="
-      else tokens.push($op(TokenType.assign))
+      if (tryConsumeCode(61)) tokens.push($op(BinaryOp.equal)) // "="
+      else tokens.push($op(AssignOp.assign))
     } else if (isDigitChar(code)) {
       scanNumber()
     } else if (isQuote(code)) { // `"`, left/right double quotation mark
       scanString()
     } else if (code === 58 || code === 0xFF1A) { // ":", Fullwidth Colon
       advance()
-      if (tryConsumeCode(61)) tokens.push($op(TokenType.init))
-      else tokens.push($op(TokenType.colon))
+      if (tryConsumeCode(61)) tokens.push($op(AssignOp.init))
+      else tokens.push($token(TokenType.colon))
     } else if (code === 124 || code === 0xFF5C) { // "|", Fullwidth Vertical Line
       advance()
-      tokens.push($op(TokenType.vBar))
+      tokens.push($token(TokenType.vBar))
     } else if (isValidIdentifierChar(char)) {
       scanIdentifier()
     } else {
@@ -169,12 +169,16 @@ export function lex(source: string) {
     return { type: TokenType.string, lexeme, line, pos }
   }
 
-  function $keyword(lexeme: Keyword): Token {
-    return { type: TokenType.keyword, lexeme, line, pos }
+  function $keyword(keyword: Keyword): Token {
+    return { type: TokenType.keyword, keyword, line, pos }
   }
 
-  function $op(operator: TokenType): Token {
-    return { type: operator, lexeme: operator, line, pos }
+  function $token(type: IndependentTokenType): Token {
+    return { type, line, pos }
+  }
+
+  function $op(operator: Operator): Token {
+    return { type: TokenType.operator, operator, line, pos }
   }
 
   function $identifier(lexeme: string): Token {

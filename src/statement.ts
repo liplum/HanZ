@@ -1,20 +1,24 @@
+import { HzVarDecl } from "./declaration"
 import { HzExpr } from "./expr"
 
 export enum StatmtType {
   if = "if",
   while = "while",
-  until = "until",
   expr = "expr",
+  varDecl = "var-decl",
+  return = "return",
+  break = "break",
+  continue = "continue",
 }
 
 
-export type HzStatmt = HzExprStatmt
+export type HzStatmt = HzIfStatmt | HzWhileStatmt | HzExprStatmt | HzVarDeclStatmt | HzReturnStatmt | HzBreakStatmt | HzContinueStatmt
 
 export interface HzIfStatmt {
   type: StatmtType.if
   condition: HzExpr
-  body: HzStatmt[]
-  else: HzStatmt[]
+  consequent: HzStatmt[]
+  alternate?: HzStatmt[]
 }
 
 export interface HzWhileStatmt {
@@ -23,13 +27,25 @@ export interface HzWhileStatmt {
   body: HzStatmt[]
 }
 
-export interface HzUntilStatmt {
-  type: StatmtType.until
-  condition: HzExpr
-  body: HzStatmt[]
-}
-
 export interface HzExprStatmt {
   type: StatmtType.expr
   expr: HzExpr
+}
+
+export interface HzVarDeclStatmt {
+  type: StatmtType.varDecl
+  declare: HzVarDecl
+}
+
+export interface HzReturnStatmt {
+  type: StatmtType.return
+  value: HzExpr
+}
+
+export interface HzBreakStatmt {
+  type: StatmtType.break
+}
+
+export interface HzContinueStatmt {
+  type: StatmtType.continue
 }
