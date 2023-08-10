@@ -1,4 +1,4 @@
-import { DeclType, HzFuncDecl, HzFuncSignaturePart, HzObjDecl, HzVarDecl } from "./declaration.js"
+import { DeclType, FuncSign, HzFuncDecl, HzObjDecl, HzVarDecl, NaryFuncSignPart } from "./declaration.js"
 import { ExprType, HzFuncCallExpr, HzCallPart, HzExpr } from "./expr.js"
 import { LiteralType } from "./literal.js"
 import { HzBreakStatmt, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt, StatmtType } from "./statement.js"
@@ -268,8 +268,8 @@ export function parse(tokens: Token[]) {
     }
   }
 
-  function parseFuncSelectors(): HzFuncSignaturePart[] | { selector: string } {
-    const parts: HzFuncSignaturePart[] = []
+  function parseFuncSelectors(): FuncSign {
+    const parts: NaryFuncSignPart[] = []
     do {
       const selector = advance()
       if (selector.type !== TokenType.identifier) {

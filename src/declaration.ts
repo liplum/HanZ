@@ -11,7 +11,13 @@ export interface HzVarDecl {
   vars: string[]
 }
 
-export interface HzFuncSignaturePart {
+export type FuncSign = NullaryFuncSign | NaryFuncSign
+
+export interface NullaryFuncSign {
+  selector: string
+}
+
+export interface NaryFuncSignPart {
   selector: string
   /**
    * Undefined means discard.
@@ -19,11 +25,13 @@ export interface HzFuncSignaturePart {
   param?: string
 }
 
-export type HzFuncDecl = HzPlainFuncDecl | HzNullaryFuncDecl
+export type NaryFuncSign = NaryFuncSignPart[]
 
-export interface HzPlainFuncDecl {
+export type HzFuncDecl = HzNaryFuncDecl | HzNullaryFuncDecl
+
+export interface HzNaryFuncDecl {
   type: DeclType.func
-  parts: HzFuncSignaturePart[]
+  parts: FuncSign[]
   body: HzStatmt[]
 }
 

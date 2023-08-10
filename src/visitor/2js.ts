@@ -4,40 +4,43 @@ import { DeclType, HzFuncDecl, HzObjDecl } from "../declaration"
 import { HzExprStatmt, HzInitStatmt, StatmtType } from "../statement"
 import { HzExpr } from "../expr"
 
+interface Context {
+  [key: string]: unknown
+}
+
 function transpile2Js(topLevels: TopLevel[], output: Writable) {
+  const topLevelCtx: Context = {}
   for (const topLevel of topLevels) {
     if (topLevel.type === DeclType.obj) {
-      visitObjDecl(topLevel)
+      visitObjDecl(topLevel, topLevelCtx)
     } else if (topLevel.type === DeclType.func) {
-      visitFuncDecl(topLevel)
+      visitFuncDecl(topLevel, topLevelCtx)
     } else if (topLevel.type === StatmtType.expr) {
-      visitExprStatmt(topLevel)
+      visitExprStatmt(topLevel, topLevelCtx)
     } else if (topLevel.type === StatmtType.init) {
-      visitInitStatmt(topLevel)
+      visitInitStatmt(topLevel, topLevelCtx)
     }
   }
 
-  function scanObjDeclSymbol(decl: HzObjDecl): void {
+  function visitObjDecl(decl: HzObjDecl, ctx: Context): void {
+    for (const field of decl.fields) {
+      
+    }
+  }
+
+  function visitFuncDecl(decl: HzFuncDecl, ctx: Context): void {
 
   }
 
-  function visitObjDecl(decl: HzObjDecl): void {
-    output.write("s")
-  }
-
-  function visitFuncDecl(decl: HzFuncDecl): void {
+  function visitExprStatmt(statmt: HzExprStatmt, ctx: Context): void {
 
   }
 
-  function visitExprStatmt(statmt: HzExprStatmt): void {
+  function visitInitStatmt(statmt: HzInitStatmt, ctx: Context): void {
 
   }
 
-  function visitInitStatmt(statmt: HzInitStatmt): void {
-
-  }
-
-  function visitExpr(expr: HzExpr): void {
+  function visitExpr(expr: HzExpr, ctx: Context): void {
 
   }
 }
