@@ -2,7 +2,7 @@ import { DeclType, HzFuncDecl, HzFuncSignaturePart, HzObjDecl, HzVarDecl } from 
 import { ExprType, HzFuncCallExpr, HzCallPart, HzExpr } from "./expr.js"
 import { LiteralType } from "./literal.js"
 import { HzBreakStatmt, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt, StatmtType } from "./statement.js"
-import { Keyword, Operator as Op, SpecialIdentifier, Token, TokenType } from "./token.js"
+import { Keyword, Operator as Op, SpecialIdentifier, Token, TokenType, isAssign } from "./token.js"
 
 export type TopLevel = HzObjDecl | HzFuncDecl | HzExprStatmt | HzInitStatmt
 
@@ -28,6 +28,10 @@ const opPrecedences = {
   [Op.timesAssign]: 14,
   [Op.divideAssign]: 14,
   [Op.moduloAssign]: 14,
+}
+
+export function isLvalue(expr: HzExpr): boolean {
+  return expr.type === ExprType.var
 }
 
 export function parse(tokens: Token[]) {
@@ -301,6 +305,9 @@ export function parse(tokens: Token[]) {
       const opToken = peek()
       if (opToken.type !== TokenType.operator) break
       advance()
+      if (isAssign(opToken.operator) && !isLvalue(left)) {
+        throw new ParseError("Cannot assign a rvalue", opToken)
+      }
       const precedence = opPrecedences[opToken.operator] ?? 0
       if (precedence === 0) break
       let right = parsePrimary(left)

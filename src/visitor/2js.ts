@@ -17,6 +17,10 @@ function transpile2Js(topLevels: TopLevel[], output: Writable) {
     }
   }
 
+  function scanObjDeclSymbol(decl: HzObjDecl): void {
+
+  }
+
   function visitObjDecl(decl: HzObjDecl): void {
     output.write("s")
   }

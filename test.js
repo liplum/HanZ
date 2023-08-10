@@ -69,7 +69,7 @@ test("[parse] object + method + field + method chaining + init + ctor", t => {
     余额 = 0。
   】
   账户 继承自: 另一账户【
-    自己 余额 = 另一账户 余额。
+    余额 = 另一账户 余额。
   】
   // to deposit money
   函数 存入: 金额【
@@ -94,7 +94,15 @@ test("[parse] object + method + field + method chaining + init + ctor", t => {
 账户甲 存入: 799, 取出: 199。
   `
   const tokens = lex(source)
-  t.is(tokens.length, 78)
+  t.is(tokens.length, 77)
   const topLevels = parse(tokens)
   t.is(topLevels.length, 5)
+})
+
+test("[x] assign to rvalue", t => {
+  try {
+    parse(lex("obj prop = 10"))
+  } catch {
+    t.pass()
+  }
 })

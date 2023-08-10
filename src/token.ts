@@ -112,3 +112,12 @@ export enum Operator {
   moduloAssign = "%=",
   assign = "=",
 }
+
+export function isAssign(op: Operator): boolean {
+  return op === Operator.assign
+    || op === Operator.plusAssign
+    || op === Operator.minusAssign
+    || op === Operator.timesAssign
+    || op === Operator.divideAssign
+    || op === Operator.moduloAssign
+}
