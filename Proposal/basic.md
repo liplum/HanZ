@@ -17,13 +17,11 @@ The following keywords can't be used in identifier.
 |----------|---------|
 | if       | 如果    |
 | else     | 否则    |
-| elif     | 又如果  |
 | object   | 对象    |
 | while    | 每当    |
 | func     | 函数    |
 | break    | 中断    |
 | continue | 继续    |
-| self     | 自己    |
 | return   | 返回    |
 
 ## Operators
@@ -50,6 +48,6 @@ And they are ignored by the lexer, which means they don't affect the program's e
 
 Here's an example of a comment:
 
-```python
+```c
 // This is a comment explaining the purpose of the following code.
 ```

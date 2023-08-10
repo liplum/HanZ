@@ -17,7 +17,6 @@ export enum TokenType {
 export enum Keyword {
   if = "if",
   else = "else",
-  elif = "elif",
   object = "object",
   while = "while",
   func = "func",
@@ -34,7 +33,6 @@ export enum SpecialIdentifier {
 export const en2Keyword = {
   if: Keyword.if,
   else: Keyword.else,
-  elif: Keyword.elif,
   object: Keyword.object,
   while: Keyword.while,
   func: Keyword.func,
@@ -46,9 +44,8 @@ export const en2Keyword = {
 export const hanSimplified2Keyword = {
   如果: Keyword.if,
   否则: Keyword.else,
-  又如果: Keyword.elif,
   对象: Keyword.object,
-  当: Keyword.while,
+  每当: Keyword.while,
   函数: Keyword.func,
   中断: Keyword.break,
   继续: Keyword.continue,
