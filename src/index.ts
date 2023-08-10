@@ -1,5 +1,6 @@
 import { lex } from "./lexer.js"
-
-const source = "foo = 10."
+import { parse } from "./parser.js"
+const source = "5.14 + 16 * 3。"
 const tokens = lex(source)
-console.log(tokens)
+const topLevels = parse(tokens)
+console.log(topLevels)

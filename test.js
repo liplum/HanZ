@@ -1,6 +1,7 @@
 /* eslint-disable quotes */
 import test from "ava"
 import { lex } from "./dist/lexer.js"
+import { parse } from "./dist/parser.js"
 import { TokenType } from "./dist/token.js"
 test("[lexer] simple expr", t => {
   const source = "5.14+16*3"
@@ -80,4 +81,12 @@ test("[lexer] large source", t => {
 `
   const tokens = lex(source)
   t.is(tokens.length, 54)
+})
+
+test("[parse] simple expr", t => {
+  const source = "5.14 + 16 * 3。"
+  const tokens = lex(source)
+  t.is(tokens.length, 7)
+  const topLevels = parse(tokens)
+  t.is(topLevels.length, 1)
 })

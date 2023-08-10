@@ -185,7 +185,7 @@ export function lex(source: string) {
   }
 
   function $op(operator: Operator): Token {
-    return { type: TokenType.operator, operator, line, pos }
+    return { type: TokenType.operator, operator: operator, line, pos }
   }
 
   function $identifier(lexeme: string): Token {

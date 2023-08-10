@@ -23,10 +23,10 @@ const opPrecedences = {
   [Op.neq]: 7,
 }
 
-export function parser(tokens: Token[]) {
+export function parse(tokens: Token[]) {
   let pos = 0
   const topLevels: TopLevel[] = []
-  while (pos < tokens.length) {
+  while (peek().type !== TokenType.eof) {
     const topLevel = parseTopLevel()
     topLevels.push(topLevel)
   }
@@ -249,29 +249,21 @@ export function parser(tokens: Token[]) {
     let left = parsePrimary()
     for (; ;) {
       const opToken = peek()
-      if (opToken.type !== TokenType.operator) {
-        throw new ParseError("Expect an operator", opToken)
-      }
+      if (opToken.type !== TokenType.operator) break
       advance()
       const precedence = opPrecedences[opToken.operator] ?? 0
       if (precedence === 0) break
       let right = parsePrimary()
       for (; ;) {
-        const curOpToken = peek()
-        if (curOpToken.type !== TokenType.operator) {
-          throw new ParseError("Expect an operator", curOpToken)
-        }
-        advance()
-        const curPrecedence = opPrecedences[curOpToken.operator] ?? 0
-        if (precedence >= curPrecedence) {
+        const nextOpToken = peek()
+        if (nextOpToken.type !== TokenType.operator) break
+        const nextPrecedence = opPrecedences[nextOpToken.operator] ?? 0
+        if (precedence >= nextPrecedence) {
           break
         }
-        const nextOpToken = peek()
-        if (nextOpToken.type !== TokenType.operator) {
-          throw new ParseError("Expect an operator", nextOpToken)
-        }
         advance()
-        right = { type: ExprType.binary, left: right, op: nextOpToken.operator, right: parsePrimary() }
+        const nextRight = parsePrimary()
+        right = { type: ExprType.binary, left: right, op: nextOpToken.operator, right: nextRight }
       }
       left = { type: ExprType.binary, left, op: opToken.operator, right }
     }
@@ -291,7 +283,7 @@ export function parser(tokens: Token[]) {
     } else if (t.type === TokenType.identifier) {
       advance()
     }
-    throw new ParseError("Unrecognized primary token",t)
+    throw new ParseError("Unrecognized primary token", t)
   }
 
   function advance(): Token {
