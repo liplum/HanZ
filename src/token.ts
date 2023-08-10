@@ -86,20 +86,18 @@ export type Token = ({
   pos: number
 }
 
-export enum BinaryOp {
+export enum Operator {
   plus = "+",
   minus = "-",
   times = "*",
   divide = "/",
   modulo = "%",
-  equal = "==",
+  eq = "==",
+  neq = "!=",
   gt = ">",
   lt = "<",
   gte = ">=",
   lte = "<=",
-}
-
-export enum AssignOp {
   plusAssign = "+=",
   minusAssign = "-=",
   timesAssign = "*=",
@@ -108,10 +106,3 @@ export enum AssignOp {
   assign = "=",
   init = ":=",
 }
-
-export enum UnaryOp {
-  plus = "+",
-  minus = "-",
-}
-
-export type Operator = UnaryOp | BinaryOp | AssignOp

@@ -13,10 +13,10 @@ export interface HzStringLiteral {
 
 export interface HzNumberLiteral {
   type: LiteralType.number
-  value: number
+  value: string
 }
 
 export interface HzBoolLiteral {
   type: LiteralType.bool
-  value: boolean
+  value: string
 }

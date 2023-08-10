@@ -2,9 +2,26 @@ import { DeclType, HzFuncDecl, HzFuncSignaturePart, HzObjDecl, HzVarDecl } from 
 import { ExprType, HzExpr } from "./expr.js"
 import { LiteralType } from "./literal.js"
 import { HzBreakStatmt, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt, StatmtType } from "./statement.js"
-import { Keyword, Operator, Token, TokenType } from "./token.js"
+import { Keyword, Operator as Op, Operator, Token, TokenType } from "./token.js"
 
 export type TopLevel = HzObjDecl | HzFuncDecl | HzExprStatmt
+
+const opPrecedences = {
+  [Op.plus]: 2,
+  [Op.minus]: 2,
+
+  [Op.times]: 4,
+  [Op.divide]: 4,
+  [Op.modulo]: 4,
+
+  [Op.lt]: 6,
+  [Op.lte]: 6,
+  [Op.gt]: 6,
+  [Op.gte]: 6,
+
+  [Op.eq]: 7,
+  [Op.neq]: 7,
+}
 
 export function parser(tokens: Token[]) {
   let pos = 0
@@ -49,10 +66,6 @@ export function parser(tokens: Token[]) {
       throw new ParseError("Expect '.' to end expr", peek())
     }
     return { type: StatmtType.expr, expr }
-  }
-  function parseExpr(): HzExpr {
-    // TODO:
-    return { type: ExprType.literal, value: { type: LiteralType.string, value: "" } }
   }
 
   function parseStatmt(): HzStatmt {
@@ -232,6 +245,55 @@ export function parser(tokens: Token[]) {
     return parts
   }
 
+  function parseExpr(): HzExpr {
+    let left = parsePrimary()
+    for (; ;) {
+      const opToken = peek()
+      if (opToken.type !== TokenType.operator) {
+        throw new ParseError("Expect an operator", opToken)
+      }
+      advance()
+      const precedence = opPrecedences[opToken.operator] ?? 0
+      if (precedence === 0) break
+      let right = parsePrimary()
+      for (; ;) {
+        const curOpToken = peek()
+        if (curOpToken.type !== TokenType.operator) {
+          throw new ParseError("Expect an operator", curOpToken)
+        }
+        advance()
+        const curPrecedence = opPrecedences[curOpToken.operator] ?? 0
+        if (precedence >= curPrecedence) {
+          break
+        }
+        const nextOpToken = peek()
+        if (nextOpToken.type !== TokenType.operator) {
+          throw new ParseError("Expect an operator", nextOpToken)
+        }
+        advance()
+        right = { type: ExprType.binary, left: right, op: nextOpToken.operator, right: parsePrimary() }
+      }
+      left = { type: ExprType.binary, left, op: opToken.operator, right }
+    }
+    return left
+  }
+
+  function parsePrimary(): HzExpr {
+    const t = peek()
+    if (t.type === TokenType.number) {
+      advance()
+      const value = { type: LiteralType.number, value: t.lexeme }
+      return { type: ExprType.literal, value }
+    } else if (t.type === TokenType.string) {
+      advance()
+      const value = { type: LiteralType.string, value: t.lexeme }
+      return { type: ExprType.literal, value }
+    } else if (t.type === TokenType.identifier) {
+      advance()
+    }
+    throw new ParseError("Unrecognized primary token",t)
+  }
+
   function advance(): Token {
     pos++
     return tokens[pos - 1]
@@ -243,8 +305,8 @@ export function parser(tokens: Token[]) {
   function tryConsume(expected: TokenType): boolean
   function tryConsume(expected: TokenType.keyword, value: Keyword): boolean
   function tryConsume(expected: TokenType.identifier, value: string): boolean
-  function tryConsume(expected: TokenType.operator, value: Operator): boolean
-  function tryConsume(expected: TokenType, value?: string | Keyword | Operator): boolean {
+  function tryConsume(expected: TokenType.operator, value: Op): boolean
+  function tryConsume(expected: TokenType, value?: string | Keyword | Op): boolean {
     const t = peek()
     if (t === undefined) return false
     if (t.type != expected) return false

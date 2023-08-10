@@ -1,5 +1,5 @@
 import { HzLiteral } from "./literal"
-import { AssignOp, BinaryOp, UnaryOp } from "./token.js"
+import { Operator } from "./token.js"
 
 export enum ExprType {
   unary = "unary",
@@ -19,20 +19,20 @@ export interface HzLvalue {
 export interface HzAssign {
   type: ExprType.assign
   left: HzLvalue
-  op: AssignOp
+  op: Operator
   right: HzExpr
 }
 
 export interface HzBinaryExpr {
   type: ExprType.binary
   left: HzExpr
-  op: BinaryOp
+  op: Operator
   right: HzExpr
 }
 
 export interface HzUnaryExpr {
   type: ExprType.unary
-  op: UnaryOp
+  op: Operator
   right: HzExpr
 }
 

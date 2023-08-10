@@ -35,7 +35,7 @@
   】
 
   账户 继承自: 另一账户【
-    #余额 = 另一账户 余额。
+    自己 余额 = 另一账户 余额。
   】
 
   // to deposit money
@@ -55,14 +55,14 @@
 ```js
 class 账户{
   static 新建(){
-    const obj = new 账户()
-    obj.余额 = 0
-    return obj
+    const self = new 账户()
+    self.余额 = 0
+    return self
   }
   static 继承自(另一账户){
-    const obj = new 账户()
-    obj.余额 = 另一账户.余额
-    return obj
+    const self = new 账户()
+    self.余额 = 另一账户.余额
+    return self
   }
   存入(金额){
     this.余额 += 金额

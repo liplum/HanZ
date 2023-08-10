@@ -1,5 +1,5 @@
 // lexer.ts
-import { TokenType, Keyword, Token, parseKeyword, Operator, BinaryOp, AssignOp, IndependentTokenType } from "./token.js"
+import { TokenType, Keyword, Token, parseKeyword, Operator, IndependentTokenType } from "./token.js"
 
 function isDigitChar(code: number): boolean {
   // ASCII codes for '0' to '9'
@@ -45,36 +45,36 @@ export function lex(source: string) {
       tokens.push($token(TokenType.comma))
     } else if (code === 43) { // "+"
       advance()
-      if (tryConsumeCode(61)) tokens.push($op(AssignOp.plusAssign)) // "="
-      else tokens.push($op(BinaryOp.plus))
+      if (tryConsumeCode(61)) tokens.push($op(Operator.plusAssign)) // "="
+      else tokens.push($op(Operator.plus))
     } else if (code === 45) { // "-"
       advance()
-      if (tryConsumeCode(61)) tokens.push($op(AssignOp.minusAssign)) // "="
-      else tokens.push($op(BinaryOp.minus))
+      if (tryConsumeCode(61)) tokens.push($op(Operator.minusAssign)) // "="
+      else tokens.push($op(Operator.minus))
     } else if (code === 42) { // "*"
       advance()
-      if (tryConsumeCode(61)) tokens.push($op(AssignOp.timesAssign)) // "="
-      else tokens.push($op(BinaryOp.times)) // *
+      if (tryConsumeCode(61)) tokens.push($op(Operator.timesAssign)) // "="
+      else tokens.push($op(Operator.times)) // *
     } else if (code === 47) { // "/"
       advance()
-      if (tryConsumeCode(61)) tokens.push($op(AssignOp.divideAssign)) // "="
+      if (tryConsumeCode(61)) tokens.push($op(Operator.divideAssign)) // "="
       else if (tryConsumeCode(47)) ignoreComment()
-      else tokens.push($op(BinaryOp.divide))
+      else tokens.push($op(Operator.divide))
     } else if (code === 37) { // "%"
       advance()
-      if (tryConsumeCode(61)) tokens.push($op(AssignOp.moduloAssign)) // "="
-      else tokens.push($op(BinaryOp.modulo))
+      if (tryConsumeCode(61)) tokens.push($op(Operator.moduloAssign)) // "="
+      else tokens.push($op(Operator.modulo))
     } else if (code === 61) { // "="
       advance()
-      if (tryConsumeCode(61)) tokens.push($op(BinaryOp.equal)) // "="
-      else tokens.push($op(AssignOp.assign))
+      if (tryConsumeCode(61)) tokens.push($op(Operator.eq)) // "="
+      else tokens.push($op(Operator.assign))
     } else if (isDigitChar(code)) {
       scanNumber()
     } else if (isQuote(code)) { // `"`, left/right double quotation mark
       scanString()
     } else if (code === 58 || code === 0xFF1A) { // ":", Fullwidth Colon
       advance()
-      if (tryConsumeCode(61)) tokens.push($op(AssignOp.init))
+      if (tryConsumeCode(61)) tokens.push($op(Operator.init))
       else tokens.push($token(TokenType.colon))
     } else if (code === 124 || code === 0xFF5C) { // "|", Fullwidth Vertical Line
       advance()
