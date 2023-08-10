@@ -2,7 +2,7 @@ import { lex } from "./lexer.js"
 import { ParseError, parse } from "./parser.js"
 const source =
   `
-  账户甲 存入: 799, 取出: 199。
+结果 := 乘方: 5。
 `
 const tokens = lex(source)
 try {

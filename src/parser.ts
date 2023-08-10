@@ -80,7 +80,7 @@ export function parse(tokens: Token[]) {
     }
     const value = parseExpr()
     if (!tryConsume(TokenType.dot)) {
-      throw new ParseError("Expect '.' to end 'return'", peek())
+      throw new ParseError("Expect '.' to end 'init'", peek())
     }
     return { type: StatmtType.init, name: nameToken.lexeme, value }
   }
@@ -331,24 +331,32 @@ export function parse(tokens: Token[]) {
       const value = { type: LiteralType.string, value: t.lexeme }
       return { type: ExprType.literal, value }
     } else if (t.type === TokenType.identifier) {
-      if (peekNext()?.type === TokenType.identifier) {
+      const nextToken = peekNext()
+      if (nextToken?.type === TokenType.identifier) {
         advance()
         // function call
-        for (; ;) {
-          left = parseFuncCallExpr(left ?? { type: ExprType.var, var: t.lexeme })
-          if (tryConsume(TokenType.comma)) {
-            // method chaining
-            continue
-          }
-          break
-        }
-        return left
+        return parseFuncCallChainingExpr(left ?? { type: ExprType.var, var: t.lexeme })
+      } else if (nextToken?.type === TokenType.colon) {
+        // independent function call
+        return parseFuncCallChainingExpr()
       } else {
         advance()
         return { type: ExprType.var, var: t.lexeme }
       }
     }
     throw new ParseError("Unrecognized primary token", t)
+  }
+
+  function parseFuncCallChainingExpr(caller?: HzExpr): HzFuncCallExpr {
+    for (; ;) {
+      caller = parseFuncCallExpr(caller)
+      if (tryConsume(TokenType.comma)) {
+        // method chaining
+        continue
+      }
+      break
+    }
+    return caller
   }
 
   function parseFuncCallExpr(caller?: HzExpr): HzFuncCallExpr {

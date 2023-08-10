@@ -3,7 +3,7 @@ import test from "ava"
 import { lex } from "./dist/lexer.js"
 import { parse } from "./dist/parser.js"
 import { TokenType } from "./dist/token.js"
-test("[lexer] simple expr", t => {
+test("[lex] simple expr", t => {
   const source = "5.14+16*3"
   const tokens = lex(source)
   t.is(tokens.length, 6)
@@ -14,14 +14,14 @@ test("[lexer] simple expr", t => {
   t.is(tokens[4].lexeme, "3")
 })
 
-test("[lexer] quoted string", t => {
+test("[lex] quoted string", t => {
   const source = `"hello, world!"`
   const tokens = lex(source)
   t.is(tokens.length, 2)
   t.is(tokens[0].lexeme, "hello, world!")
 })
 
-test("[lexer] escape string", t => {
+test("[lex] escape string", t => {
   const source = `"a\\tb\\"c"`
   const tokens = lex(source)
   t.is(tokens.length, 2)
@@ -29,7 +29,7 @@ test("[lexer] escape string", t => {
   t.pass()
 })
 
-test("[lexer] identifier + new line", t => {
+test("[lex] identifier + new line", t => {
   const source =
     `foo = 10.
 bar = 5.`
@@ -39,7 +39,7 @@ bar = 5.`
   t.is(tokens[4].lexeme, "bar")
 })
 
-test("[lexer] comment", t => {
+test("[lex] comment", t => {
   const source =
     `foo = 10. // assign to 10
 // nothing
@@ -60,7 +60,7 @@ test("[parse] simple expr", t => {
   t.is(topLevels.length, 1)
 })
 
-test("full source", t => {
+test("[parse] object + method + field + method chaining + init + ctor", t => {
   const source =
     `
 对象 账户【
