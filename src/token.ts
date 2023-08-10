@@ -4,7 +4,6 @@ export enum TokenType {
   keyword = "keyword",
   identifier = "identifier",
   operator = "operator",
-  discard = "discard",
   eof = "eof",
   dot = ".",
   vBar = "|",
@@ -23,8 +22,12 @@ export enum Keyword {
   func = "func",
   break = "break",
   continue = "continue",
-  self = "self",
   return = "return",
+}
+
+export enum SpecialIdentifier {
+  self = "self",
+  discard = "_",
 }
 
 export const en2Keyword = {
@@ -36,7 +39,6 @@ export const en2Keyword = {
   func: Keyword.func,
   break: Keyword.break,
   continue: Keyword.continue,
-  self: Keyword.self,
   return: Keyword.return,
 }
 
@@ -49,19 +51,26 @@ export const hanSimplified2Keyword = {
   函数: Keyword.func,
   中断: Keyword.break,
   继续: Keyword.continue,
-  自己: Keyword.self,
   返回: Keyword.return,
+}
+
+export const hanSimplified2Identifier = {
+  "自己": "self",
 }
 
 export function isKeyword(identifier: string): boolean {
   return Boolean(en2Keyword[identifier]) || Boolean(hanSimplified2Keyword[identifier])
 }
 
+export function mapIdentifier(identifier: string): string {
+  return hanSimplified2Identifier[identifier] ?? identifier
+}
+
 export function parseKeyword(identifier: string): Keyword | undefined {
   return en2Keyword[identifier] ?? hanSimplified2Keyword[identifier]
 }
 
-export type IndependentTokenType = TokenType.dot | TokenType.eof | TokenType.vBar | TokenType.lbracket | TokenType.rbracket | TokenType.colon | TokenType.comma | TokenType.discard
+export type IndependentTokenType = TokenType.dot | TokenType.eof | TokenType.vBar | TokenType.lbracket | TokenType.rbracket | TokenType.colon | TokenType.comma
 
 export type Token = ({
   type: IndependentTokenType

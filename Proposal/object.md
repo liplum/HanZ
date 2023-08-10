@@ -78,12 +78,12 @@ class 账户{
 ## Method Calling
 
 ```
-账户甲 := 账户 新建
+账户甲 := 账户 新建。
 
-账户甲 存入: 799
-账户甲 取出: 199
-# equivalent to method chaining below
-账户甲 存入: 799, 取出: 199
+账户甲 存入: 799。
+账户甲 取出: 199。
+// equivalent to method chaining below
+账户甲 存入: 799, 取出: 199。
 ```
 
 ## Functor

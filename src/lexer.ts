@@ -1,5 +1,5 @@
 // lexer.ts
-import { TokenType, Keyword, Token, parseKeyword, Operator, IndependentTokenType } from "./token.js"
+import { TokenType, Keyword, Token, parseKeyword, Operator, IndependentTokenType, mapIdentifier } from "./token.js"
 
 function isDigitChar(code: number): boolean {
   // ASCII codes for '0' to '9'
@@ -100,16 +100,13 @@ export function lex(source: string) {
       const char = advance()
       chars.push(char)
     }
-    const identifier = chars.join("")
-    if (identifier === "_") {
-      tokens.push($token(TokenType.discard))
+    let identifier = chars.join("")
+    const keyword = parseKeyword(identifier)
+    if (keyword) {
+      tokens.push($keyword(keyword))
     } else {
-      const keyword = parseKeyword(identifier)
-      if (keyword) {
-        tokens.push($keyword(keyword))
-      } else {
-        tokens.push($identifier(identifier))
-      }
+      identifier = mapIdentifier(identifier)
+      tokens.push($identifier(identifier))
     }
   }
 

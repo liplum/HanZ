@@ -2,7 +2,7 @@ import { DeclType, HzFuncDecl, HzFuncSignaturePart, HzObjDecl, HzVarDecl } from 
 import { ExprType, HzExpr } from "./expr.js"
 import { LiteralType } from "./literal.js"
 import { HzBreakStatmt, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt, StatmtType } from "./statement.js"
-import { Keyword, Operator as Op, Operator, Token, TokenType } from "./token.js"
+import { Keyword, Operator as Op, SpecialIdentifier, Token, TokenType } from "./token.js"
 
 export type TopLevel = HzObjDecl | HzFuncDecl | HzExprStatmt
 
@@ -21,6 +21,13 @@ const opPrecedences = {
 
   [Op.eq]: 7,
   [Op.neq]: 7,
+
+  [Op.assign]: 14,
+  [Op.plusAssign]: 14,
+  [Op.minusAssign]: 14,
+  [Op.timesAssign]: 14,
+  [Op.divideAssign]: 14,
+  [Op.moduloAssign]: 14,
 }
 
 export function parse(tokens: Token[]) {
@@ -47,7 +54,6 @@ export function parse(tokens: Token[]) {
   }
 
   function parseBlock(): HzStatmt[] {
-    // consume "["
     if (!tryConsume(TokenType.lbracket)) {
       throw new ParseError("Expect '['", peek())
     }
@@ -56,8 +62,9 @@ export function parse(tokens: Token[]) {
       const statmt = parseStatmt()
       all.push(statmt)
     }
-    // consume "]"
-    advance()
+    if (!tryConsume(TokenType.rbracket)) {
+      throw new ParseError("Expect ']'", peek())
+    }
     return all
   }
   function parseExprStatmt(): HzExprStatmt {
@@ -123,6 +130,7 @@ export function parse(tokens: Token[]) {
     }
     return { type: StatmtType.continue }
   }
+
   function parseIfStatmt(): HzIfStatmt {
     // consume `if`
     if (!tryConsume(TokenType.keyword, Keyword.if)) {
@@ -137,6 +145,7 @@ export function parse(tokens: Token[]) {
     }
     return { type: StatmtType.if, condition, consequent, alternate }
   }
+
   function parseWhileStatmt(): HzWhileStatmt {
     // consume `while`
     if (!tryConsume(TokenType.keyword, Keyword.while)) {
@@ -157,7 +166,9 @@ export function parse(tokens: Token[]) {
       throw new ParseError("Expect identifier after 'object'", nameToken)
     }
     const name = nameToken.lexeme
-
+    if (!tryConsume(TokenType.lbracket)) {
+      throw new ParseError("Expect '[' to start object declaration", peek())
+    }
     const fields: HzVarDecl[] = []
     const methods: HzFuncDecl[] = []
     const ctors: HzFuncDecl[] = []
@@ -170,18 +181,35 @@ export function parse(tokens: Token[]) {
         const method = parseFuncDecl()
         methods.push(method)
       } else if (t.type === TokenType.identifier && t.lexeme === name) {
-        const ctor = parseFuncDecl()
+        const ctor = parseCtorDecl()
         ctors.push(ctor)
       } else {
         throw new ParseError("Unrecognized token in object declaration", t)
       }
     }
+    if (!tryConsume(TokenType.rbracket)) {
+      throw new ParseError("Expect ']' to end object declaration", peek())
+    }
     return { type: DeclType.obj, name, ctors, fields, methods }
+
+    function parseCtorDecl(): HzFuncDecl {
+      if (!tryConsume(TokenType.identifier, name)) {
+        throw new ParseError("Expect 'func'", peek())
+      }
+      const selectors = parseFuncSelectors()
+      const body = parseBlock()
+      if (Array.isArray(selectors)) {
+        return { type: DeclType.func, parts: selectors, body }
+      } else {
+        return { type: DeclType.func, selector: selectors.selector, body }
+      }
+    }
   }
 
   function parseVarDecl(): HzVarDecl {
-    // consume `|`
-    advance()
+    if (!tryConsume(TokenType.vBar)) {
+      throw new ParseError("Expect '|' to start variable declaration", peek())
+    }
     const vars: string[] = []
     while (peek().type !== TokenType.vBar) {
       const t = advance()
@@ -189,6 +217,9 @@ export function parse(tokens: Token[]) {
         // var name
         vars.push(t.lexeme)
       }
+    }
+    if (!tryConsume(TokenType.vBar)) {
+      throw new ParseError("Expect '|' to end variable declaration", peek())
     }
     return { type: DeclType.var, vars }
   }
@@ -214,12 +245,10 @@ export function parse(tokens: Token[]) {
   function parseFuncSelectors(): HzFuncSignaturePart[] | { selector: string } {
     const parts: HzFuncSignaturePart[] = []
     do {
-      const selector = peek()
+      const selector = advance()
       if (selector.type !== TokenType.identifier) {
         throw new ParseError("Except selector", selector)
       }
-      // consume selector
-      advance()
       if (!tryConsume(TokenType.colon)) {
         if (parts.length === 0) {
           // nullary
@@ -228,17 +257,16 @@ export function parse(tokens: Token[]) {
           throw new ParseError("Expect ':' after first selector", peek())
         }
       }
-      const param = peek()
-      if (param.type !== TokenType.identifier && param.type !== TokenType.discard) {
+      const param = advance()
+      if (param.type !== TokenType.identifier) {
         throw new ParseError("Except parameter", param)
       }
-      // consume param
-      advance()
       if (param.type === TokenType.identifier) {
-        parts.push({ selector: selector.lexeme, param: param.lexeme })
-      } else {
-        // discard
-        parts.push({ selector: selector.lexeme })
+        if (param.lexeme === SpecialIdentifier.discard) {
+          parts.push({ selector: selector.lexeme })
+        } else {
+          parts.push({ selector: selector.lexeme, param: param.lexeme })
+        }
       }
       // continue scanning if the next token is still an identifier.
     } while (peek().type === TokenType.identifier)
@@ -282,8 +310,13 @@ export function parse(tokens: Token[]) {
       return { type: ExprType.literal, value }
     } else if (t.type === TokenType.identifier) {
       advance()
+      return { type: ExprType.var, var: t.lexeme }
     }
     throw new ParseError("Unrecognized primary token", t)
+  }
+
+  function parseCallExpr(){
+
   }
 
   function advance(): Token {
@@ -308,6 +341,7 @@ export function parse(tokens: Token[]) {
     pos++
     return true
   }
+
   function isAtEnd(): boolean {
     return pos >= tokens.length
   }
