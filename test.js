@@ -89,9 +89,12 @@ test("full source", t => {
 // test messaging
 账户甲 存入: 799。
 账户甲 取出: 199。
+
+// test method chaining
+账户甲 存入: 799, 取出: 199。
   `
   const tokens = lex(source)
-  t.is(tokens.length, 69)
+  t.is(tokens.length, 78)
   const topLevels = parse(tokens)
-  t.is(topLevels.length, 4)
+  t.is(topLevels.length, 5)
 })

@@ -2,12 +2,12 @@ import { lex } from "./lexer.js"
 import { ParseError, parse } from "./parser.js"
 const source =
   `
-  账户甲 := 账户 新建。
+  账户甲 存入: 799, 取出: 199。
 `
 const tokens = lex(source)
 try {
   const topLevels = parse(tokens)
-  console.log(JSON.stringify(topLevels))
+  console.log(JSON.stringify(topLevels, null, 1))
 } catch (e) {
   if (e instanceof ParseError) {
     const token = e.token

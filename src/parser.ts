@@ -303,7 +303,7 @@ export function parse(tokens: Token[]) {
       advance()
       const precedence = opPrecedences[opToken.operator] ?? 0
       if (precedence === 0) break
-      let right = parsePrimary()
+      let right = parsePrimary(left)
       for (; ;) {
         const nextOpToken = peek()
         if (nextOpToken.type !== TokenType.operator) break
@@ -312,7 +312,7 @@ export function parse(tokens: Token[]) {
           break
         }
         advance()
-        const nextRight = parsePrimary()
+        const nextRight = parsePrimary(left, right)
         right = { type: ExprType.binary, left: right, op: nextOpToken.operator, right: nextRight }
       }
       left = { type: ExprType.binary, left, op: opToken.operator, right }
@@ -320,7 +320,7 @@ export function parse(tokens: Token[]) {
     return left
   }
 
-  function parsePrimary(): HzExpr {
+  function parsePrimary(left?: HzExpr, right?: HzExpr): HzExpr {
     const t = peek()
     if (t.type === TokenType.number) {
       advance()
@@ -334,7 +334,15 @@ export function parse(tokens: Token[]) {
       if (peekNext()?.type === TokenType.identifier) {
         advance()
         // function call
-        return parseFuncCallExpr()
+        for (; ;) {
+          left = parseFuncCallExpr(left ?? { type: ExprType.var, var: t.lexeme })
+          if (tryConsume(TokenType.comma)) {
+            // method chaining
+            continue
+          }
+          break
+        }
+        return left
       } else {
         advance()
         return { type: ExprType.var, var: t.lexeme }

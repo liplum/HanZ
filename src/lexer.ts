@@ -41,7 +41,8 @@ export function lex(source: string) {
     } else if (code === 46 || code === 0x3002) { // ".", "。"
       advance()
       tokens.push($dot())
-    } else if (code === 44 || code === 0xFF0C) { // comma, Fullwidth comma
+    } else if (code === 44 || code === 0xFF0C) { // ",", Fullwidth comma
+      advance()
       tokens.push($token(TokenType.comma))
     } else if (code === 43) { // "+"
       advance()
