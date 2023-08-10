@@ -1,10 +1,10 @@
 import { DeclType, HzFuncDecl, HzFuncSignaturePart, HzObjDecl, HzVarDecl } from "./declaration.js"
 import { ExprType, HzFuncCallExpr, HzCallPart, HzExpr } from "./expr.js"
 import { LiteralType } from "./literal.js"
-import { HzBreakStatmt, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt, StatmtType } from "./statement.js"
+import { HzBreakStatmt, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt, StatmtType } from "./statement.js"
 import { Keyword, Operator as Op, SpecialIdentifier, Token, TokenType } from "./token.js"
 
-export type TopLevel = HzObjDecl | HzFuncDecl | HzExprStatmt
+export type TopLevel = HzObjDecl | HzFuncDecl | HzExprStatmt | HzInitStatmt
 
 const opPrecedences = {
   [Op.plus]: 2,
@@ -48,6 +48,8 @@ export function parse(tokens: Token[]) {
         return parseFuncDecl()
       }
       throw new ParseError(`Unexpected Keyword '${t.keyword}'`, t)
+    } else if (t.type === TokenType.identifier && peekNext()?.type === TokenType.init) {
+      return parseInitStatmt()
     } else {
       return parseExprStatmt()
     }
@@ -67,6 +69,22 @@ export function parse(tokens: Token[]) {
     }
     return all
   }
+
+  function parseInitStatmt(): HzInitStatmt {
+    const nameToken = advance()
+    if (nameToken.type !== TokenType.identifier) {
+      throw new ParseError("Expect identifier", nameToken)
+    }
+    if (!tryConsume(TokenType.init)) {
+      throw new ParseError("Expect ':='", peek())
+    }
+    const value = parseExpr()
+    if (!tryConsume(TokenType.dot)) {
+      throw new ParseError("Expect '.' to end 'return'", peek())
+    }
+    return { type: StatmtType.init, name: nameToken.lexeme, value }
+  }
+
   function parseExprStatmt(): HzExprStatmt {
     const expr = parseExpr()
     if (!tryConsume(TokenType.dot)) {
@@ -93,6 +111,8 @@ export function parse(tokens: Token[]) {
       } else if (t.keyword === Keyword.continue) {
         return parseContinueStatmt()
       }
+    } else if (t.type === TokenType.identifier && peekNext()?.type === TokenType.init) {
+      return parseInitStatmt()
     } else {
       return parseExprStatmt()
     }
@@ -110,6 +130,7 @@ export function parse(tokens: Token[]) {
     }
     return { type: StatmtType.return, value }
   }
+
   function parseBreakStatmt(): HzBreakStatmt {
     // consume `break`
     if (!tryConsume(TokenType.keyword, Keyword.break)) {
@@ -120,6 +141,7 @@ export function parse(tokens: Token[]) {
     }
     return { type: StatmtType.break }
   }
+
   function parseContinueStatmt(): HzContinueStatmt {
     // consume `continue`
     if (!tryConsume(TokenType.keyword, Keyword.continue)) {

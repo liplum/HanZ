@@ -2,15 +2,22 @@ import { lex } from "./lexer.js"
 import { ParseError, parse } from "./parser.js"
 const source =
   `
-自己 余额 = 另一账户 余额。
-账户甲 存入: 799。
+  账户甲 := 账户 新建。
 `
 const tokens = lex(source)
 try {
   const topLevels = parse(tokens)
-  console.log(topLevels)
+  console.log(JSON.stringify(topLevels))
 } catch (e) {
   if (e instanceof ParseError) {
-    console.error(JSON.stringify(e.token), e)
+    const token = e.token
+    console.error(JSON.stringify(token), e)
+    console.log(nearby(source, token.pos))
   }
+}
+
+function nearby(source: string, pos: number): string {
+  const start = Math.max(0, pos - 5)
+  const end = Math.min(pos + 5, source.length)
+  return source.substring(start, end)
 }

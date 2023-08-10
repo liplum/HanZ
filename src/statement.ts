@@ -9,10 +9,10 @@ export enum StatmtType {
   return = "return",
   break = "break",
   continue = "continue",
+  init = "init",
 }
 
-
-export type HzStatmt = HzIfStatmt | HzWhileStatmt | HzExprStatmt | HzVarDeclStatmt | HzReturnStatmt | HzBreakStatmt | HzContinueStatmt
+export type HzStatmt = HzIfStatmt | HzWhileStatmt | HzExprStatmt | HzVarDeclStatmt | HzReturnStatmt | HzBreakStatmt | HzContinueStatmt | HzInitStatmt
 
 export interface HzIfStatmt {
   type: StatmtType.if
@@ -48,4 +48,10 @@ export interface HzBreakStatmt {
 
 export interface HzContinueStatmt {
   type: StatmtType.continue
+}
+
+export interface HzInitStatmt {
+  type: StatmtType.init
+  name: string
+  value: HzExpr
 }

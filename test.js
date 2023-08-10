@@ -82,9 +82,16 @@ test("full source", t => {
     返回 自己。
   】
 】
+
+// test instantiation
+账户甲 := 账户 新建。
+
+// test messaging
+账户甲 存入: 799。
+账户甲 取出: 199。
   `
   const tokens = lex(source)
-  t.is(tokens.length, 54)
+  t.is(tokens.length, 69)
   const topLevels = parse(tokens)
-  t.is(topLevels.length, 1)
+  t.is(topLevels.length, 4)
 })

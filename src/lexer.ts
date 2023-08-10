@@ -74,7 +74,7 @@ export function lex(source: string) {
       scanString()
     } else if (code === 58 || code === 0xFF1A) { // ":", Fullwidth Colon
       advance()
-      if (tryConsumeCode(61)) tokens.push($op(Operator.init))
+      if (tryConsumeCode(61)) tokens.push($token(TokenType.init)) // "="
       else tokens.push($token(TokenType.colon))
     } else if (code === 124 || code === 0xFF5C) { // "|", Fullwidth Vertical Line
       advance()
@@ -82,7 +82,7 @@ export function lex(source: string) {
     } else if (isValidIdentifierChar(char)) {
       scanIdentifier()
     } else {
-      advance()
+      throw $err(`Unrecognized character '${char}'[${code}]`)
     }
   }
 
