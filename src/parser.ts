@@ -1,5 +1,5 @@
 import { DeclType, HzFuncDecl, HzFuncSignaturePart, HzObjDecl, HzVarDecl } from "./declaration.js"
-import { ExprType, HzExpr } from "./expr.js"
+import { ExprType, HzFuncCallExpr, HzCallPart, HzExpr } from "./expr.js"
 import { LiteralType } from "./literal.js"
 import { HzBreakStatmt, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt, StatmtType } from "./statement.js"
 import { Keyword, Operator as Op, SpecialIdentifier, Token, TokenType } from "./token.js"
@@ -309,23 +309,53 @@ export function parse(tokens: Token[]) {
       const value = { type: LiteralType.string, value: t.lexeme }
       return { type: ExprType.literal, value }
     } else if (t.type === TokenType.identifier) {
-      advance()
-      return { type: ExprType.var, var: t.lexeme }
+      if (peekNext()?.type === TokenType.identifier) {
+        advance()
+        // function call
+        return parseFuncCallExpr()
+      } else {
+        advance()
+        return { type: ExprType.var, var: t.lexeme }
+      }
     }
     throw new ParseError("Unrecognized primary token", t)
   }
 
-  function parseCallExpr(){
-
+  function parseFuncCallExpr(caller?: HzExpr): HzFuncCallExpr {
+    const parts: HzCallPart[] = []
+    do {
+      const selector = peek()
+      if (selector.type !== TokenType.identifier) {
+        throw new ParseError("Expect selector", selector)
+      }
+      advance()
+      if (!tryConsume(TokenType.colon)) {
+        if (parts.length === 0) {
+          // nullary
+          return { type: ExprType.call, caller, selector: selector.lexeme }
+        } else {
+          throw new ParseError("Expect ':' after first selector", peek())
+        }
+      }
+      const arg = parseExpr()
+      parts.push({ selector: selector.lexeme, arg })
+    } while (peek().type === TokenType.identifier)
+    return { type: ExprType.call, caller, parts }
   }
 
   function advance(): Token {
     pos++
     return tokens[pos - 1]
   }
+
   function peek(): Token {
     return tokens[pos]
   }
+
+  function peekNext(): Token | undefined {
+    return tokens[pos + 1]
+  }
+
   // overloading
   function tryConsume(expected: TokenType): boolean
   function tryConsume(expected: TokenType.keyword, value: Keyword): boolean

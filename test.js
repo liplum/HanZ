@@ -52,41 +52,39 @@ bar = 5. // assign to 5`
   t.is(tokens[7].type, TokenType.dot)
 })
 
-test("[lexer] large source", t => {
+test("[parse] simple expr", t => {
+  const source = "5.14 + 16 * 3。"
+  const tokens = lex(source)
+  t.is(tokens.length, 7)
+  const topLevels = parse(tokens)
+  t.is(topLevels.length, 1)
+})
+
+test("full source", t => {
   const source =
     `
 对象 账户【
   | 余额 |
-
   账户 新建【
     余额 = 0。
   】
-
   账户 继承自: 另一账户【
     自己 余额 = 另一账户 余额。
   】
-
   // to deposit money
   函数 存入: 金额【
     余额 += 金额。
     返回 自己。
   】
-    
   // to withdraw money
   函数 取出: 金额【
     余额 -= 金额。
     返回 自己。
   】
 】
-`
+  `
   const tokens = lex(source)
   t.is(tokens.length, 54)
-})
-
-test("[parse] simple expr", t => {
-  const source = "5.14 + 16 * 3。"
-  const tokens = lex(source)
-  t.is(tokens.length, 7)
   const topLevels = parse(tokens)
   t.is(topLevels.length, 1)
 })
