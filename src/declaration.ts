@@ -4,7 +4,6 @@ export enum DeclType {
   var = "var",
   func = "func",
   obj = "obj",
-  ctor = "ctor",
 }
 
 export interface HzVarDecl {
@@ -13,26 +12,31 @@ export interface HzVarDecl {
 }
 
 export interface HzFuncSignaturePart {
-  name: string
-  param: string
+  selector: string
+  /**
+   * Undefined means discard.
+   */
+  param?: string
 }
 
-export interface HzFuncDecl {
+export type HzFuncDecl = HzPlainFuncDecl | HzNullaryFuncDecl
+
+export interface HzPlainFuncDecl {
   type: DeclType.func
-  signature: HzFuncSignaturePart[]
+  parts: HzFuncSignaturePart[]
   body: HzStatmt[]
 }
 
-export interface HzCtorDecl {
-  type: DeclType.ctor
-  signature: HzFuncSignaturePart[]
+export interface HzNullaryFuncDecl {
+  type: DeclType.func
+  selector: string
   body: HzStatmt[]
 }
 
 export interface HzObjDecl {
   type: DeclType.obj
   name: string
-  ctors: HzCtorDecl[]
+  ctors: HzFuncDecl[]
   fields: HzVarDecl[]
   methods: HzFuncDecl[]
 }
