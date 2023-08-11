@@ -1,4 +1,4 @@
-import { HzBlock } from "./scope"
+import { HzScope, HzObj } from "./scope"
 import { HzCodeBlock } from "./statement"
 
 export const enum DeclType {
@@ -32,7 +32,7 @@ export interface NaryFuncSelector {
 
 export class HzFuncDecl {
   body: HzCodeBlock
-  scope: HzBlock
+  scope: HzScope
 }
 
 export class HzNaryFuncDecl extends HzFuncDecl {
@@ -75,7 +75,7 @@ export class HzObjDecl {
   fields: HzVarDecl[]
   classMethods: HzFuncDecl[]
   objMethods: HzFuncDecl[]
-  scope: HzBlock
+  scope: HzObj
   constructor({ name, ctors, fields, objMethods, classMethods }: { name: string, ctors: HzFuncDecl[], fields: HzVarDecl[], objMethods: HzFuncDecl[], classMethods: HzFuncDecl[] }) {
     this.name = name
     this.ctors = ctors

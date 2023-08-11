@@ -1,15 +1,22 @@
-export class HzBlock {
-  protected parent?: HzBlock
-  protected vars: Map<string, HzVar> = new Map()
-  protected functions: Map<string, HzBlock> = new Map()
-  constructor(parent?: HzBlock) {
+export class HzScope {
+  protected parent?: HzScope
+  protected symbols: Map<string, HzSymbol> = new Map()
+  protected functions: Map<string, HzScope> = new Map()
+  constructor(parent?: HzScope) {
     this.parent = parent
   }
 
   defineVar(name: string): boolean {
-    if (this.vars.has(name)) return false
+    if (this.symbols.has(name)) return false
     const variable = new HzVar(this, name)
-    this.vars.set(name, variable)
+    this.symbols.set(name, variable)
+    return true
+  }
+
+  defineConst(name: string): boolean {
+    if (this.symbols.has(name)) return false
+    const variable = new HzConst(this, name)
+    this.symbols.set(name, variable)
     return true
   }
 
@@ -18,38 +25,50 @@ export class HzBlock {
    * @param name the variable name
    * @returns the variable or undefined
    */
-  findVar(name: string): HzVar | undefined {
-    return this.vars.get(name) ?? this.parent?.findVar(name)
+  findSymbol(name: string): HzSymbol | undefined {
+    return this.symbols.get(name) ?? this.parent?.findSymbol(name)
   }
 }
 
-export class HzObj extends HzBlock {
+export class HzObj extends HzScope {
   name: string
-  constructor(parent: HzBlock | undefined, name: string) {
+  constructor(parent: HzScope | undefined, name: string) {
     super(parent)
     this.name = name
   }
 
   defineVar(name: string): boolean {
-    if (this.vars.has(name)) return false
+    if (this.symbols.has(name)) return false
     const field = new HzField(this, name)
-    this.vars.set(name, field)
+    this.symbols.set(name, field)
     return true
   }
 }
 
-export class HzVar {
-  parent: HzBlock
+export class HzSymbol {
+  parent: HzScope
   name: string
-  constructor(parent: HzBlock, name: string) {
+  constructor(parent: HzScope, name: string) {
     this.parent = parent
     this.name = name
   }
 }
 
-export class HzField extends HzVar {
+export class HzVar extends HzSymbol {
+  constructor(parent: HzScope, name: string) {
+    super(parent, name)
+  }
+}
+
+export class HzField extends HzSymbol {
   declare parent: HzObj
   constructor(parent: HzObj, name: string) {
+    super(parent, name)
+  }
+}
+
+export class HzConst extends HzSymbol {
+  constructor(parent: HzScope, name: string) {
     super(parent, name)
   }
 }

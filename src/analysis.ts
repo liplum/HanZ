@@ -1,11 +1,11 @@
 import { HzFuncDecl, HzObjDecl } from "./declaration.js"
 import { HzExpr } from "./expr.js"
 import { TopLevel } from "./file.js"
-import { HzBlock, HzObj } from "./scope.js"
-import { HzExprStatmt, HzIfStatmt, HzInitStatmt, HzStatmt } from "./statement.js"
+import { HzScope, HzObj } from "./scope.js"
+import { HzCodeBlock, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzStatmt } from "./statement.js"
 
-export function semanticAnalyze(topLevels: TopLevel[], global?: HzBlock) {
-  global ??= new HzBlock()
+export function semanticAnalyze(topLevels: TopLevel[], global?: HzScope) {
+  global ??= new HzScope()
 
   for (const topLevel of topLevels) {
     if (topLevel instanceof HzObjDecl) {
@@ -19,50 +19,69 @@ export function semanticAnalyze(topLevels: TopLevel[], global?: HzBlock) {
     }
   }
 
-  function visitObjDecl(parent: HzBlock, decl: HzObjDecl): void {
-    const obj = new HzObj(parent, decl.name)
+  function visitObjDecl(parent: HzScope, decl: HzObjDecl): void {
+    parent.defineConst(decl.name)
+    decl.scope = new HzObj(parent, decl.name)
+    // object self is a const
+    decl.scope.defineConst(decl.name)
     for (const field of decl.fields) {
       for (const name of field.names) {
-        obj.defineVar(name)
+        decl.scope.defineVar(name)
       }
     }
-  }
-
-  function visitFuncDecl(parent: HzBlock, decl: HzFuncDecl): void {
-    const func = new HzBlock(parent)
-    for (const statmt of decl.body) {
-      $visitStatmt(func, statmt)
+    for (const method of decl.objMethods) {
+      visitObjMethodsDecl(decl.scope, method)
     }
   }
 
-  function $visitStatmt(parent: HzBlock, statmt: HzStatmt) {
+  function visitObjMethodsDecl(parent: HzObj, decl: HzFuncDecl) {
+
+  }
+
+  function visitFuncDecl(parent: HzScope, decl: HzFuncDecl): void {
+    const func = new HzScope(parent)
+    for (const statmt of decl.body) {
+      visitStatmt(func, statmt)
+    }
+  }
+
+  function visitStatmt(parent: HzScope, statmt: HzStatmt) {
     if (statmt instanceof HzIfStatmt) {
       visitIfStatmt(parent, statmt)
     }
   }
 
-  function visitIfStatmt(parent: HzBlock, statmt: HzIfStatmt): void {
-    const block = new HzBlock(parent)
-    visitExpr(block, statmt.condition)
-    for (const sub of statmt.consequent) {
-      $visitStatmt(block, sub)
-    }
+  function visitIfStatmt(parent: HzScope, statmt: HzIfStatmt): void {
+    visitExpr(parent, statmt.condition)
+    visitCodeBlock(parent, statmt.consequent)
     if (statmt.alternate) {
-      for (const sub of statmt.alternate) {
-        $visitStatmt(block, sub)
-      }
+      visitCodeBlock(parent, statmt.alternate)
     }
   }
 
-  function visitExprStatmt(parent: HzBlock, statmt: HzExprStatmt): void {
+  function visitCodeBlock(parent: HzScope, block: HzCodeBlock): void {
+    block.scope = new HzScope(parent)
+    for (const statmt of block) {
+      visitStatmt(block.scope, statmt)
+    }
+  }
+
+  function visitExprStatmt(parent: HzScope, statmt: HzExprStatmt): void {
 
   }
 
-  function visitInitStatmt(parent: HzBlock, statmt: HzInitStatmt): void {
+  function visitInitStatmt(parent: HzScope, statmt: HzInitStatmt): void {
 
   }
 
-  function visitExpr(parent: HzBlock, expr: HzExpr): void {
+  function visitExpr(parent: HzScope, expr: HzExpr): void {
 
+  }
+}
+
+export class SemanticAnalyzeError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = this.constructor.name
   }
 }

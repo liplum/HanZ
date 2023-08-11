@@ -1,6 +1,6 @@
 import { HzVarDecl } from "./declaration"
 import { HzExpr } from "./expr"
-import { HzBlock } from "./scope"
+import { HzScope } from "./scope"
 
 export enum StatmtType {
   if = "if",
@@ -15,7 +15,7 @@ export enum StatmtType {
 
 export class HzCodeBlock {
   statements: HzStatmt[]
-  scope: HzBlock
+  scope: HzScope
   constructor(statements?: HzStatmt[]) {
     this.statements = statements ?? []
   }
