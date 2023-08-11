@@ -1,7 +1,7 @@
 import { HzFuncDecl, HzNaryFuncDecl, HzNullaryFuncDecl, HzObjDecl, HzVarDecl, NaryFuncSelector } from "./declaration.js"
 import { HzFuncCallExpr, HzNaryCallSelector, HzExpr, HzBinaryExpr, HzLiteralExpr, HzVarExpr, HzNullaryFuncCallExpr, HzNaryFuncCallExpr } from "./expr.js"
 import { TopLevel } from "./file.js"
-import { LiteralType } from "./literal.js"
+import { HzNumberLiteral, HzStringLiteral, LiteralType } from "./literal.js"
 import { HzBreakStatmt, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt } from "./statement.js"
 import { Keyword, Operator as Op, SpecialIdentifier, Token, TokenType, isAssign } from "./token.js"
 
@@ -355,12 +355,10 @@ export function parse(tokens: Token[]) {
     const t = peek()
     if (t.type === TokenType.number) {
       advance()
-      const value = { type: LiteralType.number, value: t.lexeme }
-      return new HzLiteralExpr({ value })
+      return new HzLiteralExpr(new HzNumberLiteral(t.lexeme))
     } else if (t.type === TokenType.string) {
       advance()
-      const value = { type: LiteralType.string, value: t.lexeme }
-      return new HzLiteralExpr({ value })
+      return new HzLiteralExpr(new HzStringLiteral(t.lexeme))
     } else if (t.type === TokenType.identifier) {
       const nextToken = peekNext()
       if (nextToken?.type === TokenType.identifier) {

@@ -2,7 +2,7 @@ import { HzFuncDecl, HzObjDecl } from "./declaration.js"
 import { HzExpr } from "./expr.js"
 import { TopLevel } from "./file.js"
 import { Block, Obj } from "./scope.js"
-import { HzExprStatmt, HzIfStatmt, HzInitStatmt, HzStatmt, StatmtType } from "./statement.js"
+import { HzExprStatmt, HzIfStatmt, HzInitStatmt, HzStatmt } from "./statement.js"
 
 export function semanticAnalyze(topLevels: TopLevel[], global?: Block) {
   global ??= new Block()

@@ -4,19 +4,37 @@ export enum LiteralType {
   bool = "bool",
 }
 
-export type HzLiteral = HzStringLiteral | HzBoolLiteral | HzNumberLiteral
-
-export interface HzStringLiteral {
-  type: LiteralType.string
-  value: string
+export class HzLiteral<T> {
+  raw: string
+  value: T
+  constructor(raw: string) {
+    this.raw = raw
+  }
 }
 
-export interface HzNumberLiteral {
-  type: LiteralType.number
-  value: string
+export class HzStringLiteral extends HzLiteral<string> {
+  toJSON() {
+    return {
+      type: LiteralType.string,
+      raw: this.raw,
+    }
+  }
 }
 
-export interface HzBoolLiteral {
-  type: LiteralType.bool
-  value: string
+export class HzNumberLiteral extends HzLiteral<number> {
+  toJSON() {
+    return {
+      type: LiteralType.number,
+      raw: this.raw,
+    }
+  }
+}
+
+export class HzBoolLiteral extends HzLiteral<boolean> {
+  toJSON() {
+    return {
+      type: LiteralType.bool,
+      raw: this.raw,
+    }
+  }
 }

@@ -70,9 +70,9 @@ export class HzUnaryExpr extends HzExpr {
   }
 }
 
-export class HzLiteralExpr extends HzExpr {
-  value: HzLiteral
-  constructor({ value }: { value: HzLiteral }) {
+export class HzLiteralExpr<T> extends HzExpr {
+  value: HzLiteral<T>
+  constructor(value: HzLiteral<T>) {
     super()
     this.value = value
   }
