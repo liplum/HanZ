@@ -1,68 +1,43 @@
 import { DeclType, FuncSign, HzFuncDecl, HzObjDecl, NaryFuncSign } from "./declaration"
 import { HzExpr } from "./expr"
 import { TopLevel } from "./parser"
-import { HzExprStatmt, HzInitStatmt, StatmtType } from "./statement"
+import { HzExprStatmt, HzIfStatmt, HzInitStatmt, HzStatmt, StatmtType } from "./statement"
 
-export type FuncSignPattern = NullaryFuncSignPattern | NaryFuncSignPattern
-
-export type NullaryFuncSignPattern = string
-
-export type NaryFuncSignPattern = string[]
-
-export type Ref = Var | Obj | Field | Method | Global
-export type Scoped = Global | Obj | Func | Method
-
-export class Global {
+export class Block {
+  parent?: Block
   vars: Var[] = []
-  objects: Obj[] = []
-  functions: Func[] = []
+  functions: FuncSign[] = []
+  constructor(parent?: Block) {
+    this.parent = parent
+  }
+}
+
+export class Obj extends Block {
+  name: string
+  constructor(parent: Block | undefined, name: string) {
+    super(parent)
+    this.name = name
+  }
 }
 
 export class Var {
-  parent: Scoped
+  parent: Block
   name: string
-  constructor(parent: Scoped, name: string) {
+  constructor(parent: Block, name: string) {
     this.parent = parent
     this.name = name
   }
 }
 
-export class Obj {
-  parent: Global
-  name: string
-  fields: Var[] = []
-  constructor(parent: Global, name: string) {
-    this.parent = parent
-    this.name = name
+export class Field extends Var {
+  declare parent: Obj
+  constructor(parent: Obj, name: string) {
+    super(parent, name)
   }
 }
 
-export class Field {
-  parent: Obj
-  name: string
-  constructor(parent: Obj) {
-    this.parent = parent
-  }
-}
-
-export class Func {
-  parent: Global
-  vars: Var[] = []
-  constructor(parent: Global) {
-    this.parent = parent
-  }
-}
-
-export class Method {
-  parent: Obj
-  vars: Var[] = []
-  constructor(parent: Obj) {
-    this.parent = parent
-  }
-}
-
-function AST(topLevels: TopLevel[], global?: Global) {
-  global ??= new Global()
+function AST(topLevels: TopLevel[], global?: Block) {
+  global ??= new Block()
 
   for (const topLevel of topLevels) {
     if (topLevel.type === DeclType.obj) {
@@ -76,25 +51,44 @@ function AST(topLevels: TopLevel[], global?: Global) {
     }
   }
 
-  function visitObjDecl(parent: Global, decl: HzObjDecl): Obj {
+  function visitObjDecl(parent: Block, decl: HzObjDecl): void {
     const obj = new Obj(parent, decl.name)
-    return obj
   }
 
-  function visitFuncDecl(parent: Global, decl: HzFuncDecl): Func {
-    const func = new Func(parent)
-    return func
+  function visitFuncDecl(parent: Block, decl: HzFuncDecl): void {
+    const func = new Block(parent)
+    for (const statmt of decl.body) {
+      $visitStatmt(func, statmt)
+    }
   }
 
-  function visitExprStatmt(parent: Scoped, statmt: HzExprStatmt): void {
+  function $visitStatmt(parent: Block, statmt: HzStatmt) {
+    if (statmt.type === StatmtType.if) {
+      visitIfStatmt(parent, statmt)
+    }
+  }
+
+  function visitIfStatmt(parent: Block, statmt: HzIfStatmt): void {
+    const block = new Block(parent)
+    for (const sub of statmt.consequent) {
+      $visitStatmt(block, sub)
+    }
+    if (statmt.alternate) {
+      for (const sub of statmt.alternate) {
+        $visitStatmt(block, sub)
+      }
+    }
+  }
+
+  function visitExprStatmt(parent: Block, statmt: HzExprStatmt): void {
 
   }
 
-  function visitInitStatmt(parent: Scoped, statmt: HzInitStatmt): void {
+  function visitInitStatmt(parent: Block, statmt: HzInitStatmt): void {
 
   }
 
-  function visitExpr(parent: Scoped, expr: HzExpr): void {
+  function visitExpr(parent: Block, expr: HzExpr): void {
 
   }
 }
@@ -138,6 +132,12 @@ function AST(topLevels: TopLevel[], global?: Global) {
 //       || (this.parent ? this.parent.findFunc(pattern) : false)
 //   }
 // }
+
+export type FuncSignPattern = NullaryFuncSignPattern | NaryFuncSignPattern
+
+export type NullaryFuncSignPattern = string
+
+export type NaryFuncSignPattern = string[]
 
 function matchNarySign(pattern: NaryFuncSignPattern, declaredFunctions: NaryFuncSign): boolean {
   for (const declared of declaredFunctions) {
