@@ -1,4 +1,4 @@
-import { DeclType, FuncSign, HzFuncDecl, HzObjDecl, HzVarDecl, NaryFuncSignPart } from "./declaration.js"
+import { HzFuncDecl, HzNaryFuncDecl, HzNullaryFuncDecl, HzObjDecl, HzVarDecl, NaryFuncSelector } from "./declaration.js"
 import { ExprType, HzFuncCallExpr, HzCallPart, HzExpr } from "./expr.js"
 import { LiteralType } from "./literal.js"
 import { HzBreakStatmt, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt, StatmtType } from "./statement.js"
@@ -203,8 +203,9 @@ export function parse(tokens: Token[]) {
       throw new ParseError("Expect '[' to start object declaration", peek())
     }
     const fields: HzVarDecl[] = []
-    const methods: HzFuncDecl[] = []
     const ctors: HzFuncDecl[] = []
+    const objMethods: HzFuncDecl[] = []
+    const classMethods: HzFuncDecl[] = []
     while (peek().type !== TokenType.rbracket) {
       const t = peek()
       if (t.type === TokenType.vBar) {
@@ -212,7 +213,7 @@ export function parse(tokens: Token[]) {
         fields.push(field)
       } else if (t.type === TokenType.keyword && t.keyword === Keyword.method) {
         const method = parseMethodDecl()
-        methods.push(method)
+        objMethods.push(method)
       } else if (t.type === TokenType.identifier) {
         if (t.lexeme === name) {
           // constructor
@@ -221,7 +222,7 @@ export function parse(tokens: Token[]) {
         } else {
           // class method
           const method = parseMethodDecl(true)
-          methods.push(method)
+          classMethods.push(method)
         }
       } else {
         throw new ParseError("Unrecognized token in object declaration", t)
@@ -230,7 +231,7 @@ export function parse(tokens: Token[]) {
     if (!tryConsume(TokenType.rbracket)) {
       throw new ParseError("Expect ']' to end object declaration", peek())
     }
-    return { type: DeclType.obj, name, ctors, fields, methods }
+    return new HzObjDecl({ name, ctors, fields, objMethods, classMethods })
 
     function parseCtorDecl(): HzFuncDecl {
       if (!tryConsume(TokenType.identifier, name)) {
@@ -239,9 +240,9 @@ export function parse(tokens: Token[]) {
       const selectors = parseFuncSelectors()
       const body = parseBlock()
       if (Array.isArray(selectors)) {
-        return { type: DeclType.func, parts: selectors, body }
+        return new HzNaryFuncDecl({ selectors, body })
       } else {
-        return { type: DeclType.func, selector: selectors.selector, body }
+        return new HzNullaryFuncDecl({ selector: selectors, body })
       }
     }
 
@@ -252,9 +253,9 @@ export function parse(tokens: Token[]) {
       const selectors = parseFuncSelectors()
       const body = parseBlock()
       if (Array.isArray(selectors)) {
-        return { type: DeclType.func, parts: selectors, body }
+        return new HzNaryFuncDecl({ selectors, body })
       } else {
-        return { type: DeclType.func, selector: selectors.selector, body }
+        return new HzNullaryFuncDecl({ selector: selectors, body })
       }
     }
 
@@ -264,18 +265,18 @@ export function parse(tokens: Token[]) {
     if (!tryConsume(TokenType.vBar)) {
       throw new ParseError("Expect '|' to start variable declaration", peek())
     }
-    const vars: string[] = []
+    const names: string[] = []
     while (peek().type !== TokenType.vBar) {
       const t = advance()
       if (t.type === TokenType.identifier) {
         // var name
-        vars.push(t.lexeme)
+        names.push(t.lexeme)
       }
     }
     if (!tryConsume(TokenType.vBar)) {
       throw new ParseError("Expect '|' to end variable declaration", peek())
     }
-    return { type: DeclType.var, vars }
+    return new HzVarDecl({names })
   }
 
   function parseVarDeclStatmt(): HzVarDeclStatmt {
@@ -290,14 +291,14 @@ export function parse(tokens: Token[]) {
     const selectors = parseFuncSelectors()
     const body = parseBlock()
     if (Array.isArray(selectors)) {
-      return { type: DeclType.func, parts: selectors, body }
+      return new HzNaryFuncDecl({ selectors, body })
     } else {
-      return { type: DeclType.func, selector: selectors.selector, body }
+      return new HzNullaryFuncDecl({selector: selectors, body })
     }
   }
 
-  function parseFuncSelectors(): FuncSign {
-    const parts: NaryFuncSignPart[] = []
+  function parseFuncSelectors(): NaryFuncSelector[] | string {
+    const parts: NaryFuncSelector[] = []
     do {
       const selector = advance()
       if (selector.type !== TokenType.identifier) {
@@ -306,7 +307,7 @@ export function parse(tokens: Token[]) {
       if (!tryConsume(TokenType.colon)) {
         if (parts.length === 0) {
           // nullary
-          return { selector: selector.lexeme }
+          return selector.lexeme
         } else {
           throw new ParseError("Expect ':' after first selector", peek())
         }

@@ -72,12 +72,12 @@ test("[parse] object + method + field + method chaining + init + ctor", t => {
     余额 = 另一账户 余额。
   】
   // to deposit money
-  函数 存入: 金额【
+  方法 存入: 金额【
     余额 += 金额。
     返回 自己。
   】
   // to withdraw money
-  函数 取出: 金额【
+  方法 取出: 金额【
     余额 -= 金额。
     返回 自己。
   】

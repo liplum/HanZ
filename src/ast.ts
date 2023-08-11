@@ -1,14 +1,25 @@
-import { DeclType, FuncSign, HzFuncDecl, HzObjDecl, NaryFuncSign } from "./declaration"
+import { HzFuncDecl, HzObjDecl } from "./declaration"
 import { HzExpr } from "./expr"
 import { TopLevel } from "./parser"
 import { HzExprStatmt, HzIfStatmt, HzInitStatmt, HzStatmt, StatmtType } from "./statement"
 
 export class Block {
-  parent?: Block
-  vars: Var[] = []
-  functions: FuncSign[] = []
+  protected parent?: Block
+  protected vars: Map<string, Var> = new Map()
+  protected functions: Map<string, Block> = new Map()
   constructor(parent?: Block) {
     this.parent = parent
+  }
+
+  defineVar(name: string): boolean {
+    if (this.vars.has(name)) return false
+    const variable = new Var(this, name)
+    this.vars.set(name, variable)
+    return true
+  }
+
+  findVar(name: string): Var | undefined {
+    return this.vars.get(name)
   }
 }
 
@@ -17,6 +28,13 @@ export class Obj extends Block {
   constructor(parent: Block | undefined, name: string) {
     super(parent)
     this.name = name
+  }
+
+  defineVar(name: string): boolean {
+    if (this.vars.has(name)) return false
+    const field = new Field(this, name)
+    this.vars.set(name, field)
+    return true
   }
 }
 
@@ -40,9 +58,9 @@ function AST(topLevels: TopLevel[], global?: Block) {
   global ??= new Block()
 
   for (const topLevel of topLevels) {
-    if (topLevel.type === DeclType.obj) {
+    if (topLevel instanceof HzObjDecl) {
       visitObjDecl(global, topLevel)
-    } else if (topLevel.type === DeclType.func) {
+    } else if (topLevel instanceof HzFuncDecl) {
       visitFuncDecl(global, topLevel)
     } else if (topLevel.type === StatmtType.expr) {
       visitExprStatmt(global, topLevel)
@@ -53,6 +71,11 @@ function AST(topLevels: TopLevel[], global?: Block) {
 
   function visitObjDecl(parent: Block, decl: HzObjDecl): void {
     const obj = new Obj(parent, decl.name)
+    for (const field of decl.fields) {
+      for (const name of field.names) {
+        obj.defineVar(name)
+      }
+    }
   }
 
   function visitFuncDecl(parent: Block, decl: HzFuncDecl): void {
@@ -91,59 +114,4 @@ function AST(topLevels: TopLevel[], global?: Block) {
   function visitExpr(parent: Block, expr: HzExpr): void {
 
   }
-}
-
-// export class Scope {
-//   parent?: Scope
-
-//   variables: Set<string> = new Set()
-
-//   functions: FuncSign[] = []
-
-//   constructor(parent?: Scope) {
-//     this.parent = parent
-//   }
-
-//   findVar(name: string): boolean {
-//     return this.variables.has(name)
-//       || (this.parent ? this.parent.findVar(name) : false)
-//   }
-
-//   findFunc(pattern: FuncSignPattern): boolean {
-//     let found = false
-//     for (const func of this.functions) {
-//       const isDeclaredNary = Array.isArray(func)
-//       const isPatternNary = Array.isArray(pattern)
-//       if (isDeclaredNary && isPatternNary) {
-//         // both nary 
-//         if (matchNarySign(pattern, func)) {
-//           found = true
-//           break
-//         }
-//       } else if (!isDeclaredNary && !isPatternNary) {
-//         // both nullary
-//         if (pattern === func.selector) {
-//           found = true
-//           break
-//         }
-//       }
-//     }
-//     return found
-//       || (this.parent ? this.parent.findFunc(pattern) : false)
-//   }
-// }
-
-export type FuncSignPattern = NullaryFuncSignPattern | NaryFuncSignPattern
-
-export type NullaryFuncSignPattern = string
-
-export type NaryFuncSignPattern = string[]
-
-function matchNarySign(pattern: NaryFuncSignPattern, declaredFunctions: NaryFuncSign): boolean {
-  for (const declared of declaredFunctions) {
-    for (const patternPart of pattern) {
-      if (patternPart !== declared.selector) return false
-    }
-  }
-  return true
 }
