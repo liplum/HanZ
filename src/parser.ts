@@ -1,10 +1,9 @@
 import { HzFuncDecl, HzNaryFuncDecl, HzNullaryFuncDecl, HzObjDecl, HzVarDecl, NaryFuncSelector } from "./declaration.js"
 import { HzFuncCallExpr, HzNaryCallSelector, HzExpr, HzBinaryExpr, HzLiteralExpr, HzVarExpr, HzNullaryFuncCallExpr, HzNaryFuncCallExpr } from "./expr.js"
+import { TopLevel } from "./file.js"
 import { LiteralType } from "./literal.js"
-import { HzBreakStatmt, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt, StatmtType } from "./statement.js"
+import { HzBreakStatmt, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt } from "./statement.js"
 import { Keyword, Operator as Op, SpecialIdentifier, Token, TokenType, isAssign } from "./token.js"
-
-export type TopLevel = HzObjDecl | HzFuncDecl | HzExprStatmt | HzInitStatmt
 
 const opPrecedences = {
   [Op.plus]: 2,
@@ -82,7 +81,7 @@ export function parse(tokens: Token[]) {
     if (!tryConsume(TokenType.dot)) {
       throw new ParseError("Expect '.' to end 'init'", peek())
     }
-    return { type: StatmtType.init, name: nameToken.lexeme, value }
+    return new HzInitStatmt({ name: nameToken.lexeme, value })
   }
 
   function parseExprStatmt(): HzExprStatmt {
@@ -90,7 +89,7 @@ export function parse(tokens: Token[]) {
     if (!tryConsume(TokenType.dot)) {
       throw new ParseError("Expect '.' to end expr", peek())
     }
-    return { type: StatmtType.expr, expr }
+    return new HzExprStatmt({ expr })
   }
 
   function parseStatmt(): HzStatmt {
@@ -128,7 +127,7 @@ export function parse(tokens: Token[]) {
     if (!tryConsume(TokenType.dot)) {
       throw new ParseError("Expect '.' to end 'return'", peek())
     }
-    return { type: StatmtType.return, value }
+    return new HzReturnStatmt({ value })
   }
 
   function parseBreakStatmt(): HzBreakStatmt {
@@ -139,7 +138,7 @@ export function parse(tokens: Token[]) {
     if (!tryConsume(TokenType.dot)) {
       throw new ParseError("Expect '.' after 'break'", peek())
     }
-    return { type: StatmtType.break }
+    return new HzBreakStatmt()
   }
 
   function parseContinueStatmt(): HzContinueStatmt {
@@ -150,7 +149,7 @@ export function parse(tokens: Token[]) {
     if (!tryConsume(TokenType.dot)) {
       throw new ParseError("Expect '.' after 'continue'", peek())
     }
-    return { type: StatmtType.continue }
+    return new HzContinueStatmt()
   }
 
   function parseIfStatmt(): HzIfStatmt {
@@ -170,7 +169,8 @@ export function parse(tokens: Token[]) {
       if (tryConsume(TokenType.keyword, Keyword.else)) {
         alternate = parseBlock()
       }
-      return { type: StatmtType.if, condition, consequent, alternate }
+      alternate ??= []
+      return new HzIfStatmt({ condition, consequent, alternate })
     }
     return parseWithoutIf()
   }
@@ -180,10 +180,9 @@ export function parse(tokens: Token[]) {
     if (!tryConsume(TokenType.keyword, Keyword.while)) {
       throw new ParseError("Expect 'while'", peek())
     }
-    const statmt: Partial<HzWhileStatmt> = { type: StatmtType.while }
-    statmt.condition = parseExpr()
-    statmt.body = parseBlock()
-    return statmt as HzWhileStatmt
+    const condition = parseExpr()
+    const body = parseBlock()
+    return new HzWhileStatmt({condition,body})
   }
 
   function parseObjectDecl(): HzObjDecl {
@@ -277,7 +276,7 @@ export function parse(tokens: Token[]) {
 
   function parseVarDeclStatmt(): HzVarDeclStatmt {
     const declare = parseVarDecl()
-    return { type: StatmtType.varDecl, declare }
+    return new HzVarDeclStatmt({ declare })
   }
 
   function parseFuncDecl(): HzFuncDecl {

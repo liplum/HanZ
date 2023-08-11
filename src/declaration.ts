@@ -6,6 +6,7 @@ export const enum DeclType {
   naryFunc = "nary-func",
   obj = "obj",
 }
+
 export class HzVarDecl {
   names: string[]
   constructor({ names }: { names: string[] }) {

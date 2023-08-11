@@ -1,5 +1,5 @@
 import { Writable } from "stream"
-import { TopLevel } from "../parser"
+import { TopLevel } from "../file.js"
 import {  HzFuncDecl, HzObjDecl } from "../declaration"
 import { HzExprStatmt, HzInitStatmt, StatmtType } from "../statement"
 import { HzExpr } from "../expr"

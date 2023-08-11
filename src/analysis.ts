@@ -1,10 +1,10 @@
-import { HzFuncDecl, HzObjDecl } from "./declaration"
-import { HzExpr } from "./expr"
-import { TopLevel } from "./parser"
-import { Block, Obj } from "./scope"
-import { HzExprStatmt, HzIfStatmt, HzInitStatmt, HzStatmt, StatmtType } from "./statement"
+import { HzFuncDecl, HzObjDecl } from "./declaration.js"
+import { HzExpr } from "./expr.js"
+import { TopLevel } from "./file.js"
+import { Block, Obj } from "./scope.js"
+import { HzExprStatmt, HzIfStatmt, HzInitStatmt, HzStatmt, StatmtType } from "./statement.js"
 
-function AST(topLevels: TopLevel[], global?: Block) {
+export function semanticAnalyze(topLevels: TopLevel[], global?: Block) {
   global ??= new Block()
 
   for (const topLevel of topLevels) {
@@ -12,9 +12,9 @@ function AST(topLevels: TopLevel[], global?: Block) {
       visitObjDecl(global, topLevel)
     } else if (topLevel instanceof HzFuncDecl) {
       visitFuncDecl(global, topLevel)
-    } else if (topLevel.type === StatmtType.expr) {
+    } else if (topLevel instanceof HzExprStatmt) {
       visitExprStatmt(global, topLevel)
-    } else if (topLevel.type === StatmtType.init) {
+    } else if (topLevel instanceof HzInitStatmt) {
       visitInitStatmt(global, topLevel)
     }
   }
@@ -36,7 +36,7 @@ function AST(topLevels: TopLevel[], global?: Block) {
   }
 
   function $visitStatmt(parent: Block, statmt: HzStatmt) {
-    if (statmt.type === StatmtType.if) {
+    if (statmt instanceof HzIfStatmt) {
       visitIfStatmt(parent, statmt)
     }
   }

@@ -1,4 +1,4 @@
-import { HzLiteral } from "./literal"
+import { HzLiteral } from "./literal.js"
 import { Operator } from "./token.js"
 
 export const enum ExprType {
