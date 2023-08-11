@@ -25,6 +25,9 @@ The following keywords can't be used in identifier.
 | break    | 中断    |
 | continue | 继续    |
 | return   | 返回    |
+| true     | 真值    |
+| false    | 假值    |
+| null     | 空值    |
 
 ## Operators
 

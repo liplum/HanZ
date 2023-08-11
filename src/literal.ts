@@ -5,11 +5,10 @@ export enum LiteralType {
 }
 
 export class HzLiteral<T> {
-  raw: string
   value: T
-  constructor(raw: string) {
-    this.raw = raw
-  }
+  constructor(
+    public raw: string
+  ) { }
 }
 
 export class HzStringLiteral extends HzLiteral<string> {

@@ -1,7 +1,7 @@
 import { HzFuncDecl, HzNaryFuncDecl, HzNullaryFuncDecl, HzObjDecl, HzVarDecl, NaryFuncSelector } from "./declaration.js"
 import { HzFuncCallExpr, HzNaryCallSelector, HzExpr, HzBinaryExpr, HzLiteralExpr, HzVarExpr, HzNullaryFuncCallExpr, HzNaryFuncCallExpr } from "./expr.js"
 import { TopLevel } from "./file.js"
-import { HzNumberLiteral, HzStringLiteral, LiteralType } from "./literal.js"
+import { HzNumberLiteral, HzStringLiteral } from "./literal.js"
 import { HzBreakStatmt, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt } from "./statement.js"
 import { Keyword, Operator as Op, SpecialIdentifier, Token, TokenType, isAssign } from "./token.js"
 
@@ -127,7 +127,7 @@ export function parse(tokens: Token[]) {
     if (!tryConsume(TokenType.dot)) {
       throw new ParseError("Expect '.' to end 'return'", peek())
     }
-    return new HzReturnStatmt({ value })
+    return new HzReturnStatmt(value)
   }
 
   function parseBreakStatmt(): HzBreakStatmt {

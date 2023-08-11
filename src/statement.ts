@@ -81,10 +81,10 @@ export class HzVarDeclStatmt extends HzStatmt {
 }
 
 export class HzReturnStatmt extends HzStatmt {
-  value: HzExpr
-  constructor({ value }: { value: HzExpr }) {
+  constructor(
+    public value: HzExpr
+  ) {
     super()
-    this.value = value
   }
   toJSON() {
     return {
