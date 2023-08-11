@@ -1,11 +1,11 @@
 import { HzFuncDecl, HzObjDecl } from "./declaration.js"
 import { HzExpr } from "./expr.js"
 import { TopLevel } from "./file.js"
-import { Block, Obj } from "./scope.js"
+import { HzBlock, HzObj } from "./scope.js"
 import { HzExprStatmt, HzIfStatmt, HzInitStatmt, HzStatmt } from "./statement.js"
 
-export function semanticAnalyze(topLevels: TopLevel[], global?: Block) {
-  global ??= new Block()
+export function semanticAnalyze(topLevels: TopLevel[], global?: HzBlock) {
+  global ??= new HzBlock()
 
   for (const topLevel of topLevels) {
     if (topLevel instanceof HzObjDecl) {
@@ -19,8 +19,8 @@ export function semanticAnalyze(topLevels: TopLevel[], global?: Block) {
     }
   }
 
-  function visitObjDecl(parent: Block, decl: HzObjDecl): void {
-    const obj = new Obj(parent, decl.name)
+  function visitObjDecl(parent: HzBlock, decl: HzObjDecl): void {
+    const obj = new HzObj(parent, decl.name)
     for (const field of decl.fields) {
       for (const name of field.names) {
         obj.defineVar(name)
@@ -28,21 +28,21 @@ export function semanticAnalyze(topLevels: TopLevel[], global?: Block) {
     }
   }
 
-  function visitFuncDecl(parent: Block, decl: HzFuncDecl): void {
-    const func = new Block(parent)
+  function visitFuncDecl(parent: HzBlock, decl: HzFuncDecl): void {
+    const func = new HzBlock(parent)
     for (const statmt of decl.body) {
       $visitStatmt(func, statmt)
     }
   }
 
-  function $visitStatmt(parent: Block, statmt: HzStatmt) {
+  function $visitStatmt(parent: HzBlock, statmt: HzStatmt) {
     if (statmt instanceof HzIfStatmt) {
       visitIfStatmt(parent, statmt)
     }
   }
 
-  function visitIfStatmt(parent: Block, statmt: HzIfStatmt): void {
-    const block = new Block(parent)
+  function visitIfStatmt(parent: HzBlock, statmt: HzIfStatmt): void {
+    const block = new HzBlock(parent)
     visitExpr(block, statmt.condition)
     for (const sub of statmt.consequent) {
       $visitStatmt(block, sub)
@@ -54,15 +54,15 @@ export function semanticAnalyze(topLevels: TopLevel[], global?: Block) {
     }
   }
 
-  function visitExprStatmt(parent: Block, statmt: HzExprStatmt): void {
+  function visitExprStatmt(parent: HzBlock, statmt: HzExprStatmt): void {
 
   }
 
-  function visitInitStatmt(parent: Block, statmt: HzInitStatmt): void {
+  function visitInitStatmt(parent: HzBlock, statmt: HzInitStatmt): void {
 
   }
 
-  function visitExpr(parent: Block, expr: HzExpr): void {
+  function visitExpr(parent: HzBlock, expr: HzExpr): void {
 
   }
 }

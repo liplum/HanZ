@@ -1,5 +1,6 @@
 import { HzVarDecl } from "./declaration"
 import { HzExpr } from "./expr"
+import { HzBlock } from "./scope"
 
 export enum StatmtType {
   if = "if",
@@ -12,13 +13,27 @@ export enum StatmtType {
   init = "init",
 }
 
+export class HzCodeBlock {
+  statements: HzStatmt[]
+  scope: HzBlock
+  constructor(statements?: HzStatmt[]) {
+    this.statements = statements ?? []
+  }
+  toJSON() {
+    return this.statements
+  }
+  [Symbol.iterator](): Iterator<HzStatmt> {
+    return  this.statements.entries()
+  }
+}
+
 export class HzStatmt { }
 
 export class HzIfStatmt extends HzStatmt {
   condition: HzExpr
-  consequent: HzStatmt[]
-  alternate?: HzStatmt[]
-  constructor({ condition, consequent, alternate }: { condition: HzExpr, consequent: HzStatmt[], alternate: HzStatmt[] }) {
+  consequent: HzCodeBlock
+  alternate?: HzCodeBlock
+  constructor({ condition, consequent, alternate }: { condition: HzExpr, consequent: HzCodeBlock, alternate: HzCodeBlock }) {
     super()
     this.condition = condition
     this.consequent = consequent
@@ -37,8 +52,8 @@ export class HzIfStatmt extends HzStatmt {
 
 export class HzWhileStatmt extends HzStatmt {
   condition: HzExpr
-  body: HzStatmt[]
-  constructor({ condition, body }: { condition: HzExpr, body: HzStatmt[] }) {
+  body: HzCodeBlock
+  constructor({ condition, body }: { condition: HzExpr, body: HzCodeBlock }) {
     super()
     this.condition = condition
     this.body = body

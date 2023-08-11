@@ -2,7 +2,7 @@ import { HzFuncDecl, HzNaryFuncDecl, HzNullaryFuncDecl, HzObjDecl, HzVarDecl, Na
 import { HzFuncCallExpr, HzNaryCallSelector, HzExpr, HzBinaryExpr, HzLiteralExpr, HzVarExpr, HzNullaryFuncCallExpr, HzNaryFuncCallExpr } from "./expr.js"
 import { TopLevel } from "./file.js"
 import { HzNumberLiteral, HzStringLiteral } from "./literal.js"
-import { HzBreakStatmt, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt } from "./statement.js"
+import { HzBreakStatmt, HzCodeBlock, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt } from "./statement.js"
 import { Keyword, Operator as Op, SpecialIdentifier, Token, TokenType, isAssign } from "./token.js"
 
 const opPrecedences = {
@@ -54,7 +54,7 @@ export function parse(tokens: Token[]) {
     }
   }
 
-  function parseBlock(): HzStatmt[] {
+  function parseBlock(): HzCodeBlock {
     if (!tryConsume(TokenType.lbracket)) {
       throw new ParseError("Expect '['", peek())
     }
@@ -66,7 +66,7 @@ export function parse(tokens: Token[]) {
     if (!tryConsume(TokenType.rbracket)) {
       throw new ParseError("Expect ']'", peek())
     }
-    return all
+    return new HzCodeBlock(all)
   }
 
   function parseInitStatmt(): HzInitStatmt {
@@ -160,16 +160,16 @@ export function parse(tokens: Token[]) {
     function parseWithoutIf(): HzIfStatmt {
       const condition = parseExpr()
       const consequent = parseBlock()
-      let alternate: HzStatmt[] | undefined
+      let alternate: HzCodeBlock | undefined
       // for cascading if
       if (tryConsume(TokenType.keyword, Keyword.elif)) {
-        alternate = [parseWithoutIf()]
+        alternate = new HzCodeBlock([parseWithoutIf()])
       }
       // for else branch
       if (tryConsume(TokenType.keyword, Keyword.else)) {
         alternate = parseBlock()
       }
-      alternate ??= []
+      alternate ??= new HzCodeBlock()
       return new HzIfStatmt({ condition, consequent, alternate })
     }
     return parseWithoutIf()
@@ -182,7 +182,7 @@ export function parse(tokens: Token[]) {
     }
     const condition = parseExpr()
     const body = parseBlock()
-    return new HzWhileStatmt({condition,body})
+    return new HzWhileStatmt({ condition, body })
   }
 
   function parseObjectDecl(): HzObjDecl {
