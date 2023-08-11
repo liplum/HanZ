@@ -38,14 +38,28 @@
     余额 = 另一账户 余额。
   】
 
+  交换: 账户甲 与: 账户乙【
+    临时 := 账户甲 余额
+    账户甲 设置余额: 账户乙 余额
+    账户乙 设置余额: 临时
+  】
+
+  方法 设置余额: 金额【
+    如果 金额 < 0【
+      余额 = 0.
+    】否则【
+      余额 = 金额.
+    】 
+  】
+
   // to deposit money
-  函数 存入: 金额【
+  方法 存入: 金额【
     余额 += 金额。
     返回 自己。
   】
    
   // to withdraw money
-  函数 取出: 金额【
+  方法 取出: 金额【
     余额 -= 金额。
     返回 自己。
   】
@@ -53,24 +67,30 @@
 ```
 
 ```js
-class 账户{
-  static 新建(){
-    const self = new 账户()
+const 账户 = {
+  // class method
+  init$新建(){
+    const self = {}
+    self.$class = this
     self.余额 = 0
     return self
   }
-  static 继承自(另一账户){
-    const self = new 账户()
+  // class method
+  init$继承自(另一账户){
+    const self = {}
+    self.$class = this
     self.余额 = 另一账户.余额
     return self
   }
-  存入(金额){
-    this.余额 += 金额
-    return this
+  // object method
+  存入(self, 金额){
+    self.余额 += 金额
+    return self
   }
-  取出(金额){
-    this.余额 -= 金额
-    return this
+  // object method
+  取出(self, 金额){
+    self.余额 -= 金额
+    return self
   }
 }
 ```
