@@ -9,9 +9,9 @@ export enum ExprType {
   call = "call",
 }
 
-export type HzExpr = HzBinaryExpr | HzUnaryExpr | HzLiteralExpr | VariableExpr | HzFuncCallExpr
+export type HzExpr = HzBinaryExpr | HzUnaryExpr | HzLiteralExpr | HzVarExpr | HzFuncCallExpr
 
-export interface VariableExpr {
+export interface HzVarExpr {
   type: ExprType.var
   var: string
 }

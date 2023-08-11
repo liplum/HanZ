@@ -162,14 +162,21 @@ export function parse(tokens: Token[]) {
     if (!tryConsume(TokenType.keyword, Keyword.if)) {
       throw new ParseError("Expect 'if'", peek())
     }
-    const condition = parseExpr()
-    const consequent = parseBlock()
-    let alternate: HzStatmt[] | undefined
-    // if it has the `else` branch
-    if (tryConsume(TokenType.keyword, Keyword.else)) {
-      alternate = parseBlock()
+    function parseWithoutIf(): HzIfStatmt {
+      const condition = parseExpr()
+      const consequent = parseBlock()
+      let alternate: HzStatmt[] | undefined
+      // for cascading if
+      if (tryConsume(TokenType.keyword, Keyword.elif)) {
+        alternate = [parseWithoutIf()]
+      }
+      // for else branch
+      if (tryConsume(TokenType.keyword, Keyword.else)) {
+        alternate = parseBlock()
+      }
+      return { type: StatmtType.if, condition, consequent, alternate }
     }
-    return { type: StatmtType.if, condition, consequent, alternate }
+    return parseWithoutIf()
   }
 
   function parseWhileStatmt(): HzWhileStatmt {
@@ -203,12 +210,19 @@ export function parse(tokens: Token[]) {
       if (t.type === TokenType.vBar) {
         const field = parseVarDecl()
         fields.push(field)
-      } else if (t.type === TokenType.keyword && t.keyword === Keyword.func) {
-        const method = parseFuncDecl()
+      } else if (t.type === TokenType.keyword && t.keyword === Keyword.method) {
+        const method = parseMethodDecl()
         methods.push(method)
-      } else if (t.type === TokenType.identifier && t.lexeme === name) {
-        const ctor = parseCtorDecl()
-        ctors.push(ctor)
+      } else if (t.type === TokenType.identifier) {
+        if (t.lexeme === name) {
+          // constructor
+          const ctor = parseCtorDecl()
+          ctors.push(ctor)
+        } else {
+          // class method
+          const method = parseMethodDecl(true)
+          methods.push(method)
+        }
       } else {
         throw new ParseError("Unrecognized token in object declaration", t)
       }
@@ -230,6 +244,20 @@ export function parse(tokens: Token[]) {
         return { type: DeclType.func, selector: selectors.selector, body }
       }
     }
+
+    function parseMethodDecl(isClassMethod?: boolean): HzFuncDecl {
+      if (!isClassMethod && !tryConsume(TokenType.keyword, Keyword.method)) {
+        throw new ParseError("Expect 'method'", peek())
+      }
+      const selectors = parseFuncSelectors()
+      const body = parseBlock()
+      if (Array.isArray(selectors)) {
+        return { type: DeclType.func, parts: selectors, body }
+      } else {
+        return { type: DeclType.func, selector: selectors.selector, body }
+      }
+    }
+
   }
 
   function parseVarDecl(): HzVarDecl {

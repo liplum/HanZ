@@ -16,10 +16,12 @@ The following keywords can't be used in identifier.
 | English  | Chinese |
 |----------|---------|
 | if       | 如果    |
+| elif     | 又如果  |
 | else     | 否则    |
 | object   | 对象    |
 | while    | 每当    |
 | func     | 函数    |
+| method   | 方法    |
 | break    | 中断    |
 | continue | 继续    |
 | return   | 返回    |
