@@ -1,5 +1,5 @@
 import { HzFuncDecl, HzNaryFuncDecl, HzNullaryFuncDecl, HzObjDecl, HzVarDecl, NaryFuncSelector } from "./declaration.js"
-import { ExprType, HzFuncCallExpr, HzCallPart, HzExpr } from "./expr.js"
+import { HzFuncCallExpr, HzNaryCallSelector, HzExpr, HzBinaryExpr, HzLiteralExpr, HzVarExpr, HzNullaryFuncCallExpr, HzNaryFuncCallExpr } from "./expr.js"
 import { LiteralType } from "./literal.js"
 import { HzBreakStatmt, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt, StatmtType } from "./statement.js"
 import { Keyword, Operator as Op, SpecialIdentifier, Token, TokenType, isAssign } from "./token.js"
@@ -28,10 +28,6 @@ const opPrecedences = {
   [Op.timesAssign]: 14,
   [Op.divideAssign]: 14,
   [Op.moduloAssign]: 14,
-}
-
-export function isLvalue(expr: HzExpr): boolean {
-  return expr.type === ExprType.var
 }
 
 export function parse(tokens: Token[]) {
@@ -276,7 +272,7 @@ export function parse(tokens: Token[]) {
     if (!tryConsume(TokenType.vBar)) {
       throw new ParseError("Expect '|' to end variable declaration", peek())
     }
-    return new HzVarDecl({names })
+    return new HzVarDecl({ names })
   }
 
   function parseVarDeclStatmt(): HzVarDeclStatmt {
@@ -293,7 +289,7 @@ export function parse(tokens: Token[]) {
     if (Array.isArray(selectors)) {
       return new HzNaryFuncDecl({ selectors, body })
     } else {
-      return new HzNullaryFuncDecl({selector: selectors, body })
+      return new HzNullaryFuncDecl({ selector: selectors, body })
     }
   }
 
@@ -334,7 +330,7 @@ export function parse(tokens: Token[]) {
       const opToken = peek()
       if (opToken.type !== TokenType.operator) break
       advance()
-      if (isAssign(opToken.operator) && !isLvalue(left)) {
+      if (isAssign(opToken.operator) && !left.isLvalue) {
         throw new ParseError("Cannot assign a rvalue", opToken)
       }
       const precedence = opPrecedences[opToken.operator] ?? 0
@@ -349,9 +345,9 @@ export function parse(tokens: Token[]) {
         }
         advance()
         const nextRight = parsePrimary(left, right)
-        right = { type: ExprType.binary, left: right, op: nextOpToken.operator, right: nextRight }
+        right = new HzBinaryExpr({ left: right, op: nextOpToken.operator, right: nextRight })
       }
-      left = { type: ExprType.binary, left, op: opToken.operator, right }
+      left = new HzBinaryExpr({ left, op: opToken.operator, right })
     }
     return left
   }
@@ -361,23 +357,23 @@ export function parse(tokens: Token[]) {
     if (t.type === TokenType.number) {
       advance()
       const value = { type: LiteralType.number, value: t.lexeme }
-      return { type: ExprType.literal, value }
+      return new HzLiteralExpr({ value })
     } else if (t.type === TokenType.string) {
       advance()
       const value = { type: LiteralType.string, value: t.lexeme }
-      return { type: ExprType.literal, value }
+      return new HzLiteralExpr({ value })
     } else if (t.type === TokenType.identifier) {
       const nextToken = peekNext()
       if (nextToken?.type === TokenType.identifier) {
         advance()
         // function call
-        return parseFuncCallChainingExpr(left ?? { type: ExprType.var, var: t.lexeme })
+        return parseFuncCallChainingExpr(left ?? new HzVarExpr({ name: t.lexeme }))
       } else if (nextToken?.type === TokenType.colon) {
         // independent function call
         return parseFuncCallChainingExpr()
       } else {
         advance()
-        return { type: ExprType.var, var: t.lexeme }
+        return new HzVarExpr({ name: t.lexeme })
       }
     }
     throw new ParseError("Unrecognized primary token", t)
@@ -396,7 +392,7 @@ export function parse(tokens: Token[]) {
   }
 
   function parseFuncCallExpr(caller?: HzExpr): HzFuncCallExpr {
-    const parts: HzCallPart[] = []
+    const selectors: HzNaryCallSelector[] = []
     do {
       const selector = peek()
       if (selector.type !== TokenType.identifier) {
@@ -404,17 +400,17 @@ export function parse(tokens: Token[]) {
       }
       advance()
       if (!tryConsume(TokenType.colon)) {
-        if (parts.length === 0) {
+        if (selectors.length === 0) {
           // nullary
-          return { type: ExprType.call, caller, selector: selector.lexeme }
+          return new HzNullaryFuncCallExpr({ caller, selector: selector.lexeme })
         } else {
           throw new ParseError("Expect ':' after first selector", peek())
         }
       }
       const arg = parseExpr()
-      parts.push({ selector: selector.lexeme, arg })
+      selectors.push({ selector: selector.lexeme, arg })
     } while (peek().type === TokenType.identifier)
-    return { type: ExprType.call, caller, parts }
+    return new HzNaryFuncCallExpr({ caller, selectors })
   }
 
   function advance(): Token {
