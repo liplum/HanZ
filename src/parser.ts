@@ -1,9 +1,9 @@
 import { HzFuncDecl, HzNaryFuncDecl, HzNullaryFuncDecl, HzObjDecl, HzVarDecl, NaryFuncSelector } from "./declaration.js"
 import { HzFuncCallExpr, HzNaryCallSelector, HzExpr, HzBinaryExpr, HzLiteralExpr, HzVarExpr, HzNullaryFuncCallExpr, HzNaryFuncCallExpr } from "./expr.js"
 import { TopLevel } from "./file.js"
-import { HzNumberLiteral, HzStringLiteral } from "./literal.js"
+import { HzBoolLiteral, HzNullLiteral, HzNumberLiteral, HzStringLiteral, HzUndefinedLiteral } from "./literal.js"
 import { HzBreakStatmt, HzCodeBlock, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt } from "./statement.js"
-import { Keyword, Operator as Op, SpecialIdentifier, Token, TokenType, isAssign } from "./token.js"
+import { Keyword, Operator as Op, SoftKeyword, Token, TokenType, isAssign } from "./token.js"
 
 const opPrecedences = {
   [Op.plus]: 2,
@@ -312,7 +312,7 @@ export function parse(tokens: Token[]) {
         throw new ParseError("Except parameter", param)
       }
       if (param.type === TokenType.identifier) {
-        if (param.lexeme === SpecialIdentifier.discard) {
+        if (param.lexeme === SoftKeyword.discard) {
           parts.push({ selector: selector.lexeme })
         } else {
           parts.push({ selector: selector.lexeme, param: param.lexeme })
@@ -368,6 +368,12 @@ export function parse(tokens: Token[]) {
       } else if (nextToken?.type === TokenType.colon) {
         // independent function call
         return parseFuncCallChainingExpr()
+      } else if (t.lexeme === SoftKeyword.true || t.lexeme === SoftKeyword.false) {
+        return new HzLiteralExpr(new HzBoolLiteral(t.lexeme))
+      } else if (t.lexeme === SoftKeyword.null) {
+        return new HzLiteralExpr(new HzNullLiteral())
+      } else if (t.lexeme === SoftKeyword.undefined) {
+        return new HzLiteralExpr(new HzUndefinedLiteral())
       } else {
         advance()
         return new HzVarExpr({ name: t.lexeme })

@@ -27,9 +27,13 @@ export enum Keyword {
   return = "return",
 }
 
-export enum SpecialIdentifier {
+export enum SoftKeyword {
   self = "self",
   discard = "_",
+  undefined = "undefined",
+  null = "null",
+  true = "true",
+  false = "false",
 }
 
 export const en2Keyword = {
@@ -59,7 +63,11 @@ export const hanSimplified2Keyword = {
 }
 
 export const hanSimplified2Identifier = {
-  "自己": "self",
+  自己: SoftKeyword.self,
+  真值: SoftKeyword.true,
+  假值: SoftKeyword.false,
+  未定义: SoftKeyword.undefined,
+  空值: SoftKeyword.null,
 }
 
 export function isKeyword(identifier: string): boolean {
@@ -83,7 +91,7 @@ export type Token = ({
   keyword: Keyword
 } | {
   type: TokenType.identifier
-  lexeme: string
+  lexeme: string | SoftKeyword
 } | {
   type: TokenType.string
   lexeme: string
