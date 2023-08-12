@@ -1,8 +1,8 @@
-import { HzFuncDecl, HzNaryFuncDecl, HzNullaryFuncDecl, HzObjDecl, HzVarDecl } from "./declaration.js"
-import { HzExpr, HzLiteralExpr, HzNullaryFuncCallExpr, HzVarExpr } from "./expr.js"
+import { HzFuncDecl, HzNaryFuncDecl, HzNullaryFuncDecl, HzObjDecl, HzVarDecl, getFuncSignature } from "./declaration.js"
+import { HzBinaryExpr, HzExpr, HzLiteralExpr, HzNaryFuncCallExpr, HzNullaryFuncCallExpr, HzVarExpr } from "./expr.js"
 import { TopLevel } from "./file.js"
 import { HzBoolLiteral, HzNumberLiteral, HzStringLiteral } from "./literal.js"
-import { HzBlock, HzNullaryFunc, HzObj, HzVar } from "./scope.js"
+import { HzBlock, HzNullaryFunc, HzObj, HzVar, } from "./scope.js"
 import { HzCodeBlock, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt } from "./statement.js"
 import { SoftKeyword } from "./token.js"
 
@@ -32,6 +32,9 @@ export function semanticAnalyze(topLevels: TopLevel[], global?: HzBlock) {
         obj.scope.defineField(name)
       }
     }
+    for (const ctor of obj.ctors) {
+      visitObjMethodsDecl(obj.scope, ctor)
+    }
     for (const method of obj.objMethods) {
       visitObjMethodsDecl(obj.scope, method)
     }
@@ -44,21 +47,18 @@ export function semanticAnalyze(topLevels: TopLevel[], global?: HzBlock) {
         method.scope.defineVar(selector)
       }
     }
-    for (const statmt of method.body) {
-      visitStatmt(method.scope, statmt)
-    }
+    visitCodeBlock(method.scope, method.body)
   }
 
   function visitFuncDecl(parent: HzBlock, func: HzFuncDecl): void {
     func.scope = new HzBlock(parent)
+    parent.defineFunc(func.signature)
     if (func instanceof HzNaryFuncDecl) {
       for (const { selector } of func.selectors) {
         func.scope.defineVar(selector)
       }
     }
-    for (const statmt of func.body) {
-      visitStatmt(func.scope, statmt)
-    }
+    visitCodeBlock(parent, func.body)
   }
 
   function visitStatmt(parent: HzBlock, statmt: HzStatmt) {
@@ -127,6 +127,10 @@ export function semanticAnalyze(topLevels: TopLevel[], global?: HzBlock) {
       visitVarExpr(parent, expr)
     } else if (expr instanceof HzNullaryFuncCallExpr) {
       visitNullaryFuncCallExpr(parent, expr)
+    } else if (expr instanceof HzNaryFuncCallExpr) {
+      visitNaryFuncCallExpr(parent, expr)
+    } else if (expr instanceof HzBinaryExpr) {
+      visitBinaryExpr(parent, expr)
     }
   }
   function visitLiteralExpr(parent: HzBlock, expr: HzLiteralExpr): void {
@@ -142,14 +146,37 @@ export function semanticAnalyze(topLevels: TopLevel[], global?: HzBlock) {
   function visitVarExpr(parent: HzBlock, expr: HzVarExpr): void {
     const name = expr.name
     if (!parent.findSymbol(name)) {
-      throw new SemanticAnalyzeError(`${name} isn't declared`, expr)
+      throw new SemanticAnalyzeError(`${name} not declared`, expr)
     }
   }
-  function visitNullaryFuncCallExpr(parent: HzBlock, expr: HzNullaryFuncCallExpr) {
+  function visitNullaryFuncCallExpr(parent: HzBlock, expr: HzNullaryFuncCallExpr): void {
     if (expr.caller) {
       visitExpr(parent, expr.caller)
     }
-    expr.selector
+    // if a function doesn't have a caller, it's not a method, check if it exists.
+    if (!expr.caller) {
+      if (!parent.findFunc(getFuncSignature(expr.selector))) {
+        throw new SemanticAnalyzeError("Function not declared", expr)
+      }
+    }
+  }
+  function visitNaryFuncCallExpr(parent: HzBlock, expr: HzNaryFuncCallExpr): void {
+    if (expr.caller) {
+      visitExpr(parent, expr.caller)
+    }
+    for (const { arg } of expr.selectors) {
+      visitExpr(parent, arg)
+    }
+    // if a function doesn't have a caller, it's not a method, check if it exists.
+    if (!expr.caller) {
+      if (!parent.findFunc(getFuncSignature(expr.selectors))) {
+        throw new SemanticAnalyzeError("Function not declared", expr)
+      }
+    }
+  }
+  function visitBinaryExpr(parent: HzBlock, expr: HzBinaryExpr): void {
+    visitExpr(parent, expr.left)
+    visitExpr(parent, expr.right)
   }
 }
 

@@ -1,4 +1,4 @@
-import { HzFuncDecl, HzNaryFuncDecl, HzNullaryFuncDecl, HzObjDecl, HzVarDecl, NaryFuncSelector } from "./declaration.js"
+import { HzFuncDecl, HzNaryFuncDecl, HzNullaryFuncDecl, HzObjDecl, HzVarDecl, NaryFuncSelectorDecl } from "./declaration.js"
 import { HzFuncCallExpr, HzNaryCallSelector, HzExpr, HzBinaryExpr, HzLiteralExpr, HzVarExpr, HzNullaryFuncCallExpr, HzNaryFuncCallExpr } from "./expr.js"
 import { TopLevel } from "./file.js"
 import { HzBoolLiteral, HzNullLiteral, HzNumberLiteral, HzStringLiteral, HzUndefinedLiteral } from "./literal.js"
@@ -292,8 +292,8 @@ export function parse(tokens: Token[]) {
     }
   }
 
-  function parseFuncSelectors(): NaryFuncSelector[] | string {
-    const parts: NaryFuncSelector[] = []
+  function parseFuncSelectors(): NaryFuncSelectorDecl[] | string {
+    const parts: NaryFuncSelectorDecl[] = []
     do {
       const selector = advance()
       if (selector.type !== TokenType.identifier) {

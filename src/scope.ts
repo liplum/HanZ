@@ -1,8 +1,9 @@
-import { NaryFuncSelector } from "./declaration"
+import { NaryFuncSelectorDecl } from "./declaration"
 import { HzNaryCallSelector } from "./expr"
 
 export interface HzScoped<TScope = HzBlock> {
-  scope: TScope
+  get scope(): TScope
+  set scope(scope: TScope)
 }
 
 export interface HzScope {
@@ -27,7 +28,7 @@ export class HzBlock implements HzScope {
     return true
   }
 
-  defineFunc(selectors: HzNaryCallSelector[] | string): boolean {
+  defineFunc(selectors: NaryFuncSelectorDecl[] | string): boolean {
     let name: string
     let func: HzFunc
     if (typeof selectors === "string") {
@@ -58,7 +59,7 @@ export class HzBlock implements HzScope {
 
 export class HzObj implements HzScope {
   protected parent: HzBlock
-  owner: HzScoped<HzBlock>
+  owner: HzScoped<HzObj>
   protected fields: Map<string, HzField> = new Map()
   protected methods: Map<string, HzFunc> = new Map()
   name: string
@@ -134,8 +135,8 @@ export class HzField extends HzSymbol {
 export type HzFunc = HzNaryFunc | HzNullaryFunc
 
 export class HzNaryFunc extends HzSymbol {
-  selectors: NaryFuncSelector[]
-  constructor(parent: HzScope, selectors: NaryFuncSelector[]) {
+  selectors: NaryFuncSelectorDecl[]
+  constructor(parent: HzScope, selectors: NaryFuncSelectorDecl[]) {
     super(parent)
     this.selectors = selectors
   }
@@ -147,10 +148,4 @@ export class HzNullaryFunc extends HzSymbol {
     super(parent)
     this.selector = selector
   }
-}
-
-export function genFuncSignature(selectors: string | HzNaryCallSelector[]): string {
-  return typeof selectors === "string"
-    ? selectors
-    : selectors.map(t => t.selector).join("$")
 }
