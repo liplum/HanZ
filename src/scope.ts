@@ -1,8 +1,17 @@
-export class HzScope {
-  protected parent?: HzScope
+export interface HzScoped<TScope = HzBlock> {
+  scope: TScope
+}
+
+export interface HzScope {
+  findSymbol(name: string): HzSymbol | undefined
+}
+
+export class HzBlock implements HzScope {
+  protected parent?: HzBlock
+  owner: HzScoped<HzBlock>
   protected symbols: Map<string, HzSymbol> = new Map()
-  protected functions: Map<string, HzScope> = new Map()
-  constructor(parent?: HzScope) {
+  protected functions: Map<string, HzBlock> = new Map()
+  constructor(parent?: HzBlock) {
     this.parent = parent
   }
 
@@ -30,9 +39,10 @@ export class HzScope {
   }
 }
 
-export class HzObj extends HzScope {
+export class HzObj extends HzBlock {
   name: string
-  constructor(parent: HzScope | undefined, name: string) {
+  declare owner: HzScoped<HzObj>
+  constructor(parent: HzBlock | undefined, name: string) {
     super(parent)
     this.name = name
   }
@@ -55,7 +65,7 @@ export class HzSymbol {
 }
 
 export class HzVar extends HzSymbol {
-  constructor(parent: HzScope, name: string) {
+  constructor(parent: HzBlock, name: string) {
     super(parent, name)
   }
 }
@@ -68,7 +78,7 @@ export class HzField extends HzSymbol {
 }
 
 export class HzConst extends HzSymbol {
-  constructor(parent: HzScope, name: string) {
+  constructor(parent: HzBlock, name: string) {
     super(parent, name)
   }
 }

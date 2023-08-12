@@ -1,11 +1,11 @@
 import { HzFuncDecl, HzObjDecl } from "./declaration.js"
 import { HzExpr } from "./expr.js"
 import { TopLevel } from "./file.js"
-import { HzScope, HzObj } from "./scope.js"
+import { HzBlock, HzObj } from "./scope.js"
 import { HzCodeBlock, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzStatmt } from "./statement.js"
 
-export function semanticAnalyze(topLevels: TopLevel[], global?: HzScope) {
-  global ??= new HzScope()
+export function semanticAnalyze(topLevels: TopLevel[], global?: HzBlock) {
+  global ??= new HzBlock()
 
   for (const topLevel of topLevels) {
     if (topLevel instanceof HzObjDecl) {
@@ -19,7 +19,7 @@ export function semanticAnalyze(topLevels: TopLevel[], global?: HzScope) {
     }
   }
 
-  function visitObjDecl(parent: HzScope, decl: HzObjDecl): void {
+  function visitObjDecl(parent: HzBlock, decl: HzObjDecl): void {
     parent.defineConst(decl.name)
     decl.scope = new HzObj(parent, decl.name)
     // object self is a const
@@ -38,20 +38,20 @@ export function semanticAnalyze(topLevels: TopLevel[], global?: HzScope) {
 
   }
 
-  function visitFuncDecl(parent: HzScope, decl: HzFuncDecl): void {
-    const func = new HzScope(parent)
+  function visitFuncDecl(parent: HzBlock, decl: HzFuncDecl): void {
+    const func = new HzBlock(parent)
     for (const statmt of decl.body) {
       visitStatmt(func, statmt)
     }
   }
 
-  function visitStatmt(parent: HzScope, statmt: HzStatmt) {
+  function visitStatmt(parent: HzBlock, statmt: HzStatmt) {
     if (statmt instanceof HzIfStatmt) {
       visitIfStatmt(parent, statmt)
     }
   }
 
-  function visitIfStatmt(parent: HzScope, statmt: HzIfStatmt): void {
+  function visitIfStatmt(parent: HzBlock, statmt: HzIfStatmt): void {
     visitExpr(parent, statmt.condition)
     visitCodeBlock(parent, statmt.consequent)
     if (statmt.alternate) {
@@ -59,22 +59,22 @@ export function semanticAnalyze(topLevels: TopLevel[], global?: HzScope) {
     }
   }
 
-  function visitCodeBlock(parent: HzScope, block: HzCodeBlock): void {
-    block.scope = new HzScope(parent)
+  function visitCodeBlock(parent: HzBlock, block: HzCodeBlock): void {
+    block.scope = new HzBlock(parent)
     for (const statmt of block) {
       visitStatmt(block.scope, statmt)
     }
   }
 
-  function visitExprStatmt(parent: HzScope, statmt: HzExprStatmt): void {
+  function visitExprStatmt(parent: HzBlock, statmt: HzExprStatmt): void {
+    
+  }
+
+  function visitInitStatmt(parent: HzBlock, statmt: HzInitStatmt): void {
 
   }
 
-  function visitInitStatmt(parent: HzScope, statmt: HzInitStatmt): void {
-
-  }
-
-  function visitExpr(parent: HzScope, expr: HzExpr): void {
+  function visitExpr(parent: HzBlock, expr: HzExpr): void {
 
   }
 }
