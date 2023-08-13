@@ -8,15 +8,15 @@ export const enum DeclType {
 }
 
 export class HzVarDecl {
-  names: string[]
-  constructor({ names }: { names: string[] }) {
-    this.names = names
+  name: string
+  constructor(name: string) {
+    this.name = name
   }
 
   toJSON() {
     return {
       type: DeclType.var,
-      names: this.names,
+      name: this.name,
     }
   }
 }
@@ -42,6 +42,10 @@ export function getFuncSignature(selectors: string | NaryFuncSelector[]): string
   return typeof selectors === "string"
     ? selectors
     : selectors.map(t => t.selector).join("$")
+}
+
+export function getNaryFuncRepr(selectors: NaryFuncSelector[]): string {
+  return selectors.map(s => `${s.selector}`).join(": ")
 }
 
 export class HzNaryFuncDecl extends HzFuncDecl {

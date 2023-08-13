@@ -7,12 +7,6 @@ export class ASTNode {
   }
 }
 
-export interface ASTNode2 {
-  parent?: ASTNode2
-  register(): void
-  build(): ASTNode2
-}
-
 export class BlockNode extends ASTNode {
   protected locals: Map<string, RefNode> = new Map()
   protected statements: StatementNode[] = []
@@ -71,8 +65,8 @@ export class ObjNode extends RefNode {
 }
 
 export class FuncNode extends RefNode {
-  protected body: BlockNode
   protected params: Map<string, ParamNode> = new Map()
+  protected body: BlockNode
   constructor(name: string) {
     super(name)
     this.constant = true
@@ -134,9 +128,45 @@ export class RefExprNode extends ExprNode {
 }
 
 export class BinaryExprNode extends ExprNode {
-  left: ExprNode
-  op: Operator
-  right: ExprNode
+  protected left: ExprNode
+  protected op: Operator
+  protected right: ExprNode
+  constructor(op: Operator) {
+    super()
+    this.op = op
+  }
+  defLeft(left: ExprNode): void {
+    if (this.left)
+      throw new ASTNodeDefinedError("Left operand already defined in binary expr", this, left)
+    this.left = left
+    left.parent = this
+  }
+  defRight(right: ExprNode): void {
+    if (this.right)
+      throw new ASTNodeDefinedError("Right operand already defined in binary expr", this, right)
+    this.right = right
+    right.parent = this
+  }
+}
+
+export class FuncCallExprNode extends ExprNode {
+  protected caller?: ExprNode
+  protected func: FuncNode
+  protected args: ExprNode[] = []
+  setCaller(caller: ExprNode) {
+    if (this.caller)
+      throw new ASTNodeDefinedError("call already defined in func call", this, caller)
+    this.caller = caller
+  }
+  setFunc(func: FuncNode) {
+    if (this.func)
+      throw new ASTNodeDefinedError("func already defined in func call", this, func)
+    this.func = func
+  }
+  addArg(arg: ExprNode) {
+    this.args.push(arg)
+    arg.parent = this
+  }
 }
 
 export class LiteralNode<T = unknown> extends ExprNode {
@@ -212,15 +242,9 @@ export class ReturnStatementNode extends StatementNode {
 export class InitStatementNode extends StatementNode {
   protected lvalue: LocalVarNode
   protected rvalue: ExprNode
-  defLvalue(lvalue: LocalVarNode): void {
+  setLvalue(lvalue: LocalVarNode): void {
     if (this.lvalue)
       throw new ASTNodeDefinedError("Lvalue already defined in init", this, lvalue)
-    for (let cur = this.parent; cur !== undefined; cur = cur.parent) {
-      if (cur instanceof BlockNode) {
-        cur.defineLocal(lvalue)
-        break
-      }
-    }
     this.lvalue = lvalue
   }
   defRvalue(rvalue: ExprNode): void {

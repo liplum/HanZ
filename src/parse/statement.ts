@@ -14,8 +14,10 @@ export enum StatmtType {
 
 export class HzCodeBlock {
   statements: HzStatmt[]
-  constructor(statements?: HzStatmt[]) {
+  locals: HzVarDecl[]
+  constructor(statements?: HzStatmt[], locals?: HzVarDecl[]) {
     this.statements = statements ?? []
+    this.locals = locals ?? []
   }
   toJSON() {
     return this.statements
@@ -75,20 +77,6 @@ export class HzExprStatmt extends HzStatmt {
     return {
       type: StatmtType.expr,
       expr: this.expr,
-    }
-  }
-}
-
-export class HzVarDeclStatmt extends HzStatmt {
-  declare: HzVarDecl
-  constructor({ declare }: { declare: HzVarDecl }) {
-    super()
-    this.declare = declare
-  }
-  toJSON() {
-    return {
-      type: StatmtType.varDecl,
-      declare: this.declare,
     }
   }
 }

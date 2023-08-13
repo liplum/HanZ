@@ -2,7 +2,7 @@ import { HzFuncDecl, HzNaryFuncDecl, HzNullaryFuncDecl, HzObjDecl, HzVarDecl, Na
 import { HzFuncCallExpr, HzNaryCallSelector, HzExpr, HzBinaryExpr, HzLiteralExpr, HzVarExpr, HzNullaryFuncCallExpr, HzNaryFuncCallExpr } from "./expr.js"
 import { HzFileDef, TopLevel } from "./file.js"
 import { HzBoolLiteral, HzNullLiteral, HzNumberLiteral, HzStringLiteral, HzUndefinedLiteral } from "./literal.js"
-import { HzBreakStatmt, HzCodeBlock, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt } from "./statement.js"
+import { HzBreakStatmt, HzCodeBlock, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzWhileStatmt } from "./statement.js"
 import { Keyword, Operator as Op, SoftKeyword, Token, TokenType, isAssign } from "../lex/token.js"
 
 const opPrecedences = {
@@ -58,15 +58,21 @@ export function parse(tokens: Token[]): HzFileDef {
     if (!tryConsume(TokenType.lbracket)) {
       throw new ParseError("Expect '['", peek())
     }
-    const all: HzStatmt[] = []
+    const statements: HzStatmt[] = []
+    const locals: HzVarDecl[] = []
     while (peek().type !== TokenType.rbracket) {
-      const statmt = parseStatmt()
-      all.push(statmt)
+      parseStatmt(
+        statmt => {
+          statements.push(statmt)
+        },
+        varDecl => {
+          locals.push(varDecl)
+        })
     }
     if (!tryConsume(TokenType.rbracket)) {
       throw new ParseError("Expect ']'", peek())
     }
-    return new HzCodeBlock(all)
+    return new HzCodeBlock(statements, locals)
   }
 
   function parseInitStatmt(): HzInitStatmt {
@@ -92,28 +98,31 @@ export function parse(tokens: Token[]): HzFileDef {
     return new HzExprStatmt({ expr })
   }
 
-  function parseStatmt(): HzStatmt {
+  function parseStatmt(getStatmt: (statmt: HzStatmt) => void, getVarDecl: (varDecl: HzVarDecl) => void): void {
     const t = peek()
     if (t.type === TokenType.vBar) {
       // var declaration
-      return parseVarDeclStatmt()
+      const varDecls = parseVarDecl()
+      for (const varDecl of varDecls) {
+        getVarDecl(varDecl)
+      }
     } else if (t.type === TokenType.keyword) {
       // if, while, return, break, continue
       if (t.keyword === Keyword.if) {
-        return parseIfStatmt()
+        getStatmt(parseIfStatmt())
       } else if (t.keyword === Keyword.while) {
-        return parseWhileStatmt()
+        getStatmt(parseWhileStatmt())
       } else if (t.keyword === Keyword.return) {
-        return parseReturnStatmt()
+        getStatmt(parseReturnStatmt())
       } else if (t.keyword === Keyword.break) {
-        return parseBreakStatmt()
+        getStatmt(parseBreakStatmt())
       } else if (t.keyword === Keyword.continue) {
-        return parseContinueStatmt()
+        getStatmt(parseContinueStatmt())
       }
     } else if (t.type === TokenType.identifier && peekNext()?.type === TokenType.init) {
-      return parseInitStatmt()
+      getStatmt(parseInitStatmt())
     } else {
-      return parseExprStatmt()
+      getStatmt(parseExprStatmt())
     }
     throw new ParseError("Unrecognized Statement", t)
   }
@@ -204,8 +213,10 @@ export function parse(tokens: Token[]): HzFileDef {
     while (peek().type !== TokenType.rbracket) {
       const t = peek()
       if (t.type === TokenType.vBar) {
-        const field = parseVarDecl()
-        fields.push(field)
+        const varDecls = parseVarDecl()
+        for (const varDecl of varDecls) {
+          fields.push(varDecl)
+        }
       } else if (t.type === TokenType.keyword && t.keyword === Keyword.method) {
         const method = parseMethodDecl()
         objMethods.push(method)
@@ -256,27 +267,22 @@ export function parse(tokens: Token[]): HzFileDef {
 
   }
 
-  function parseVarDecl(): HzVarDecl {
+  function parseVarDecl(): HzVarDecl[] {
     if (!tryConsume(TokenType.vBar)) {
       throw new ParseError("Expect '|' to start variable declaration", peek())
     }
-    const names: string[] = []
+    const vars: HzVarDecl[] = []
     while (peek().type !== TokenType.vBar) {
       const t = advance()
       if (t.type === TokenType.identifier) {
         // var name
-        names.push(t.lexeme)
+        vars.push(new HzVarDecl(t.lexeme))
       }
     }
     if (!tryConsume(TokenType.vBar)) {
       throw new ParseError("Expect '|' to end variable declaration", peek())
     }
-    return new HzVarDecl({ names })
-  }
-
-  function parseVarDeclStatmt(): HzVarDeclStatmt {
-    const declare = parseVarDecl()
-    return new HzVarDeclStatmt({ declare })
+    return vars
   }
 
   function parseFuncDecl(): HzFuncDecl {

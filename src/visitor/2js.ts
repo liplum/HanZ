@@ -135,7 +135,7 @@ export function transpile2Js(topLevels: TopLevel[], output: Writable) {
   }
   function genVarDecl(decl: HzVarDecl): void {
     output.write("let ")
-    output.write(decl.names.join(","))
+    output.write(decl.name.join(","))
   }
   function genBreakStatmt(statmt: HzBreakStatmt): void {
     output.write("break;")

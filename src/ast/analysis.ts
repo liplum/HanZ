@@ -1,16 +1,12 @@
-import { HzFuncDecl, HzNaryFuncDecl, HzNullaryFuncDecl, HzObjDecl, HzVarDecl, getFuncSignature } from "../parse/declaration.js"
+import { HzFuncDecl, HzNaryFuncDecl, HzObjDecl, getFuncSignature, getNaryFuncRepr } from "../parse/declaration.js"
 import { HzBinaryExpr, HzExpr, HzLiteralExpr, HzNaryFuncCallExpr, HzNullaryFuncCallExpr, HzVarExpr } from "../parse/expr.js"
-import { HzFileDef, TopLevel } from "../parse/file.js"
+import { HzFileDef } from "../parse/file.js"
 import { HzBoolLiteral, HzNumberLiteral, HzStringLiteral } from "../parse/literal.js"
-import { HzCodeBlock, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt } from "../parse/statement.js"
+import { HzCodeBlock, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzWhileStatmt } from "../parse/statement.js"
 import { SoftKeyword } from "../lex/token.js"
-import { ASTNode, BlockNode, CtorNode, ExprNode, ExprStatementNode, FieldNode, FuncNode, IfStatementNode, InitStatementNode, LiteralNode, LocalVarNode, ObjMethodNode, ObjNode, ParamNode, RefExprNode, ReturnStatementNode, SelfRefNode, StatementNode, WhileStatementNode } from "./node.js"
+import { ASTNode, BinaryExprNode, BlockNode, CtorNode, ExprNode, ExprStatementNode, FieldNode, FuncCallExprNode, FuncNode, IfStatementNode, InitStatementNode, LiteralNode, LocalVarNode, ObjMethodNode, ObjNode, ParamNode, RefExprNode, ReturnStatementNode, SelfRefNode, StatementNode, WhileStatementNode } from "./node.js"
 type NodeLinker<T> = (node: T) => void
 
-/**
- * Semantic analysis consists of two phrases:
- * 1. Building AST partially and defining symbols(variables, functions, methods, objects,constructors).
- */
 export function semanticAnalyze(fileDef: HzFileDef): BlockNode {
   const file = new BlockNode()
   // Defining symbols
@@ -37,7 +33,7 @@ export function semanticAnalyze(fileDef: HzFileDef): BlockNode {
 
 function buildObjDecl(node: ObjNode, obj: HzObjDecl): void {
   for (const field of obj.fields) {
-    for (const name of field.names) {
+    for (const name of field.name) {
       node.defineMember(new FieldNode(name))
     }
   }
@@ -91,6 +87,9 @@ function buildFuncDecl(node: FuncNode, func: HzFuncDecl): void {
 
 function buildCodeBlock(node: BlockNode, block: HzCodeBlock): void {
   const linker = (sub: StatementNode) => node.addStatement(sub)
+  for (const local of block.locals) {
+    node.defineLocal(new LocalVarNode(local.name))
+  }
   for (const statmt of block) {
     buildStatmt(statmt, linker)
   }
@@ -117,13 +116,11 @@ function buildStatmt(statmt: HzStatmt, linker: NodeLinker<StatementNode>): void 
     const returnNode = new ReturnStatementNode()
     linker(returnNode)
     buildReturnStatmt(returnNode, statmt)
-  } else if (statmt instanceof HzVarDeclStatmt) {
-    buildVarDeclStatmt(statmt, linker)
   }
 }
 
 function buildIfStatmt(node: IfStatementNode, statmt: HzIfStatmt): IfStatementNode {
-  buildExpr(statmt.condition, sub => node.defineCondition(sub))
+  buildExpr(statmt.condition, node, sub => node.defineCondition(sub))
   // consequent
   const consequentNode = new BlockNode()
   node.defineConsequent(consequentNode)
@@ -138,47 +135,68 @@ function buildIfStatmt(node: IfStatementNode, statmt: HzIfStatmt): IfStatementNo
 }
 
 function buildWhileStatmt(node: WhileStatementNode, statmt: HzWhileStatmt): void {
-  buildExpr(statmt.condition, sub => node.defineCondition(sub))
+  buildExpr(statmt.condition, node, sub => node.defineCondition(sub))
   const bodyNode = new BlockNode()
   buildCodeBlock(bodyNode, statmt.body)
 }
 
 function buildExprStatmt(node: ExprStatementNode, statmt: HzExprStatmt): void {
-  buildExpr(statmt.expr, sub => node.defineExpr(sub))
+  buildExpr(statmt.expr, node, sub => node.defineExpr(sub))
 }
 
 function buildReturnStatmt(node: ReturnStatementNode, statmt: HzReturnStatmt): void {
-  buildExpr(statmt.value, sub => node.defValue(sub))
+  buildExpr(statmt.value, node, sub => node.defValue(sub))
 }
 
 function buildInitStatmt(node: InitStatementNode, init: HzInitStatmt): void {
   const initVar = new LocalVarNode(init.name)
-  node.defLvalue(initVar)
-  buildExpr(init.value, sub => node.defRvalue(sub))
-}
-
-function buildVarDeclStatmt(statmt: HzVarDeclStatmt, linker: NodeLinker<LocalVarNode>): void {
-  for (const name of statmt.declare.names) {
-    linker(new LocalVarNode(name))
+  for (let cur = this.parent; cur !== undefined; cur = cur.parent) {
+    if (cur instanceof BlockNode) {
+      cur.defineLocal(initVar)
+      break
+    }
   }
+  node.setLvalue(initVar)
+  buildExpr(init.value, node, sub => node.defRvalue(sub))
 }
 
-function buildExpr(expr: HzExpr, linker: NodeLinker<ExprNode>): void {
+function buildExpr(expr: HzExpr, parent: ASTNode, linker: NodeLinker<ExprNode>): void {
   if (expr instanceof HzLiteralExpr) {
-    buildLiteralExpr(expr, linker)
+    const node = new LiteralNode()
+    linker(node)
+    buildLiteralExpr(node, expr)
   } else if (expr instanceof HzVarExpr) {
-    buildVarExpr(expr, linker)
+    const varRef = parent.findRef(expr.name)
+    if (varRef === undefined) throw new SemanticAnalyzeError(`${expr.name} not declared`, expr)
+    const node = new RefExprNode(varRef)
+    linker(node)
   } else if (expr instanceof HzNullaryFuncCallExpr) {
-    buildNullaryFuncCallExpr(expr, linker)
+    const node = new FuncCallExprNode()
+    linker(node)
+    const func = parent.findRef(getFuncSignature(expr.selector))
+    if (!(func instanceof FuncNode)) throw new SemanticAnalyzeError(`${expr.selector} not declared`, node)
+    node.setFunc(func)
+    if (expr.caller) {
+      buildExpr(expr.caller, node, caller => node.setCaller(caller))
+    }
   } else if (expr instanceof HzNaryFuncCallExpr) {
-    buildNaryFuncCallExpr(expr, linker)
+    const node = new FuncCallExprNode()
+    linker(node)
+    const func = parent.findRef(getFuncSignature(expr.selectors))
+    if (!(func instanceof FuncNode)) throw new SemanticAnalyzeError(`${getNaryFuncRepr(expr.selectors)} not declared`, node)
+    node.setFunc(func)
+    if (expr.caller) {
+      buildExpr(expr.caller, node, caller => node.setCaller(caller))
+    }
+    for (const arg of expr.selectors) {
+      buildExpr(arg.arg, node, arg => node.addArg(arg))
+    }
   } else if (expr instanceof HzBinaryExpr) {
-    buildBinaryExpr(expr, linker)
+    const node = new BinaryExprNode(expr.op)
+    buildBinaryExpr(node, expr)
   }
 }
-function buildLiteralExpr(expr: HzLiteralExpr, linker: NodeLinker<ExprNode>): LiteralNode {
-  const node = new LiteralNode()
-  linker(node)
+function buildLiteralExpr(node: LiteralNode, expr: HzLiteralExpr) {
   const literal = expr.value
   node.raw = literal.raw
   if (literal instanceof HzBoolLiteral) {
@@ -188,46 +206,11 @@ function buildLiteralExpr(expr: HzLiteralExpr, linker: NodeLinker<ExprNode>): Li
   } else if (literal instanceof HzNumberLiteral) {
     node.value = Number(literal.raw)
   }
-  return node
 }
 
-function buildVarExpr(expr: HzVarExpr, linker: NodeLinker<ExprNode>): RefExprNode {
-  const name = expr.name
-  const ref = parent.findRef(name)
-  if (ref === undefined) {
-    throw new SemanticAnalyzeError(`${name} not declared`, expr)
-  }
-  return new RefExprNode(ref)
-}
-
-function buildNullaryFuncCallExpr(expr: HzNullaryFuncCallExpr, linker: NodeLinker<ExprNode>): void {
-  if (expr.caller) {
-    buildExpr(expr.caller)
-  }
-  // if a function doesn't have a caller, it's not a method, check if it exists.
-  if (!expr.caller) {
-    if (!parent.findFunc(getFuncSignature(expr.selector))) {
-      throw new SemanticAnalyzeError("Function not declared", expr)
-    }
-  }
-}
-function buildNaryFuncCallExpr(expr: HzNaryFuncCallExpr, linker: NodeLinker<ExprNode>): void {
-  if (expr.caller) {
-    buildExpr(expr.caller)
-  }
-  for (const { arg } of expr.selectors) {
-    buildExpr(arg)
-  }
-  // if a function doesn't have a caller, it's not a method, check if it exists.
-  if (!expr.caller) {
-    if (!parent.findFunc(getFuncSignature(expr.selectors))) {
-      throw new SemanticAnalyzeError("Function not declared", expr)
-    }
-  }
-}
-function buildBinaryExpr(expr: HzBinaryExpr, linker: NodeLinker<ExprNode>): void {
-  buildExpr(expr.left)
-  buildExpr(expr.right)
+function buildBinaryExpr(node: BinaryExprNode, expr: HzBinaryExpr): void {
+  buildExpr(expr.left, node, sub => node.defLeft(sub))
+  buildExpr(expr.right, node, sub => node.defRight(sub))
 }
 
 export class SemanticAnalyzeError extends Error {
