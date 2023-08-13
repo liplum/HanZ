@@ -1,4 +1,5 @@
 import { Operator } from "../lex/token"
+import { HzObjDecl } from "../parse/declaration"
 
 export class ASTNode {
   parent?: ASTNode
@@ -7,14 +8,26 @@ export class ASTNode {
   }
 }
 
+export interface ASTNode2 {
+  parent?: ASTNode2
+  register(): void
+  build(): ASTNode2
+}
+
 export class BlockNode extends ASTNode {
   protected locals: Map<string, RefNode> = new Map()
+  protected statements: StatementNode[] = []
   findRef(name: string): RefNode | undefined {
     return this.locals.get(name) ?? this.parent?.findRef(name)
   }
-  defineLocal(local: LocalVarNode) {
+  defineLocal(local: LocalVarNode): boolean {
     if (this.locals.has(local.name)) return false
     local.parent = this
+    return true
+  }
+  addStatement(statement: StatementNode): true {
+    this.statements.push(statement)
+    statement.parent = this
     return true
   }
 }
@@ -55,7 +68,7 @@ export class ObjNode extends RefNode {
 }
 
 export class FuncNode extends RefNode {
-  block: BlockNode
+  protected body: BlockNode
   protected params: Map<string, LocalVarNode> = new Map()
   constructor(name: string) {
     super(name)
@@ -64,6 +77,12 @@ export class FuncNode extends RefNode {
   defParam(param: LocalVarNode): boolean {
     if (this.params.has(param.name)) return false
     param.parent = this
+    return true
+  }
+  defBody(body: BlockNode): boolean {
+    if (this.body) return false
+    this.body = body
+    body.parent = this
     return true
   }
 }
@@ -96,6 +115,7 @@ export class ObjMethodNode extends FuncNode {
 export class SelfRefNode extends LocalVarNode {
   constructor() {
     super("self")
+    this.constant = true
   }
 }
 
@@ -126,13 +146,85 @@ export class StatementNode extends ASTNode {
 
 }
 
+export class ExprStatementNode extends StatementNode {
+  protected expr: ExprNode
+  defineExpr(expr: ExprNode): boolean {
+    if (this.expr) return false
+    this.expr = expr
+    expr.parent = this
+    return true
+  }
+}
+
 export class IfStatementNode extends StatementNode {
-  condition: ExprNode
-  consequent: BlockNode
-  alternate?: BlockNode
+  protected condition: ExprNode
+  protected consequent: BlockNode
+  protected alternate?: BlockNode
+  defineCondition(condition: ExprNode): boolean {
+    if (this.condition) return false
+    this.condition = condition
+    condition.parent = this
+    return true
+  }
+  defineConsequent(consequent: BlockNode): boolean {
+    if (this.consequent) return false
+    this.consequent = consequent
+    consequent.parent = this
+    return true
+  }
+  defineAlternate(alternate: BlockNode): boolean {
+    if (this.alternate) return false
+    this.alternate = alternate
+    alternate.parent = this
+    return true
+  }
 }
 
 export class WhileStatementNode extends StatementNode {
-  condition: ExprNode
-  body: BlockNode
+  protected condition: ExprNode
+  protected body: BlockNode
+  defineCondition(condition: ExprNode): boolean {
+    if (this.condition) return false
+    this.condition = condition
+    condition.parent = this
+    return true
+  }
+  defineBody(body: BlockNode): boolean {
+    if (this.body) return false
+    this.body = body
+    body.parent = this
+    return true
+  }
+}
+
+export class ReturnStatementNode extends StatementNode {
+  protected value: ExprNode
+  defValue(value: ExprNode): boolean {
+    if (this.value) return false
+    this.value = value
+    value.parent = this
+    return true
+  }
+}
+
+export class InitStatementNode extends StatementNode {
+  protected lvalue: LocalVarNode
+  protected value: ExprNode
+  defVar(lvalue: LocalVarNode): boolean {
+    if (this.lvalue) return false
+    for (let cur = this.parent; cur !== undefined; cur = cur.parent) {
+      if (cur instanceof BlockNode) {
+        if (!cur.defineLocal(lvalue)) return false
+        break
+      }
+    }
+    this.lvalue = lvalue
+    return true
+  }
+  defValue(value: ExprNode): boolean {
+    if (this.value) return false
+    this.value = value
+    value.parent = this
+    return true
+  }
 }
