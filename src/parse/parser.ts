@@ -1,6 +1,6 @@
 import { HzFuncDecl, HzNaryFuncDecl, HzNullaryFuncDecl, HzObjDecl, HzVarDecl, NaryFuncSelectorDecl } from "./declaration.js"
 import { HzFuncCallExpr, HzNaryCallSelector, HzExpr, HzBinaryExpr, HzLiteralExpr, HzVarExpr, HzNullaryFuncCallExpr, HzNaryFuncCallExpr } from "./expr.js"
-import { TopLevel } from "./file.js"
+import { HzFileDef, TopLevel } from "./file.js"
 import { HzBoolLiteral, HzNullLiteral, HzNumberLiteral, HzStringLiteral, HzUndefinedLiteral } from "./literal.js"
 import { HzBreakStatmt, HzCodeBlock, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt } from "./statement.js"
 import { Keyword, Operator as Op, SoftKeyword, Token, TokenType, isAssign } from "../lex/token.js"
@@ -29,14 +29,14 @@ const opPrecedences = {
   [Op.moduloAssign]: 14,
 }
 
-export function parse(tokens: Token[]) {
+export function parse(tokens: Token[]): HzFileDef {
   let pos = 0
   const topLevels: TopLevel[] = []
   while (peek().type !== TokenType.eof) {
     const topLevel = parseTopLevel()
     topLevels.push(topLevel)
   }
-  return topLevels
+  return new HzFileDef(topLevels)
 
   function parseTopLevel(): TopLevel {
     const t = peek()

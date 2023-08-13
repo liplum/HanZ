@@ -8,14 +8,13 @@ export enum LiteralType {
   undefined = "undefined",
 }
 
-export class HzLiteral<T, TRaw = string> {
-  value: T
+export class HzLiteral<TRaw = string> {
   constructor(
     public raw: TRaw
   ) { }
 }
 
-export class HzStringLiteral extends HzLiteral<string> {
+export class HzStringLiteral extends HzLiteral {
   toJSON() {
     return {
       type: LiteralType.string,
@@ -24,7 +23,7 @@ export class HzStringLiteral extends HzLiteral<string> {
   }
 }
 
-export class HzNumberLiteral extends HzLiteral<number> {
+export class HzNumberLiteral extends HzLiteral {
   toJSON() {
     return {
       type: LiteralType.number,
@@ -33,7 +32,7 @@ export class HzNumberLiteral extends HzLiteral<number> {
   }
 }
 
-export class HzBoolLiteral extends HzLiteral<boolean, SoftKeyword.true | SoftKeyword.false> {
+export class HzBoolLiteral extends HzLiteral<SoftKeyword.true | SoftKeyword.false> {
   toJSON() {
     return {
       type: LiteralType.bool,
@@ -42,7 +41,7 @@ export class HzBoolLiteral extends HzLiteral<boolean, SoftKeyword.true | SoftKey
   }
 }
 
-export class HzNullLiteral extends HzLiteral<null, SoftKeyword.null> {
+export class HzNullLiteral extends HzLiteral<SoftKeyword.null> {
   constructor() {
     super(SoftKeyword.null)
   }
@@ -54,7 +53,7 @@ export class HzNullLiteral extends HzLiteral<null, SoftKeyword.null> {
   }
 }
 
-export class HzUndefinedLiteral extends HzLiteral<undefined, SoftKeyword.undefined> {
+export class HzUndefinedLiteral extends HzLiteral<SoftKeyword.undefined> {
   constructor() {
     super(SoftKeyword.undefined)
   }

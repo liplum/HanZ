@@ -1,4 +1,3 @@
-import { HzBlock, HzObj, HzScoped } from "../scope"
 import { HzCodeBlock } from "./statement"
 
 export const enum DeclType {
@@ -34,17 +33,9 @@ export interface NaryFuncSelectorDecl extends NaryFuncSelector {
   param?: string
 }
 
-export class HzFuncDecl implements HzScoped<HzBlock> {
+export class HzFuncDecl {
   body: HzCodeBlock
-  protected _scope: HzBlock
   signature: string
-  get scope(): HzBlock {
-    return this._scope
-  }
-  set scope(scope: HzBlock) {
-    this._scope = scope
-    scope.owner = this
-  }
 }
 
 export function getFuncSignature(selectors: string | NaryFuncSelector[]): string {
@@ -89,26 +80,18 @@ export class HzNullaryFuncDecl extends HzFuncDecl {
   }
 }
 
-export class HzObjDecl implements HzScoped<HzObj> {
+export class HzObjDecl {
   name: string
   ctors: HzFuncDecl[]
   fields: HzVarDecl[]
   classMethods: HzFuncDecl[]
   objMethods: HzFuncDecl[]
-  protected _scope: HzObj
   constructor({ name, ctors, fields, objMethods, classMethods }: { name: string, ctors: HzFuncDecl[], fields: HzVarDecl[], objMethods: HzFuncDecl[], classMethods: HzFuncDecl[] }) {
     this.name = name
     this.ctors = ctors
     this.fields = fields
     this.objMethods = objMethods
     this.classMethods = classMethods
-  }
-  get scope(): HzObj {
-    return this._scope
-  }
-  set scope(scope: HzObj) {
-    this._scope = scope
-    scope.owner = this
   }
   toJSON() {
     return {

@@ -1,6 +1,5 @@
 import { HzVarDecl } from "./declaration"
 import { HzExpr } from "./expr"
-import { HzBlock, HzScoped } from "../scope"
 
 export enum StatmtType {
   if = "if",
@@ -13,18 +12,10 @@ export enum StatmtType {
   init = "init",
 }
 
-export class HzCodeBlock implements HzScoped<HzBlock> {
+export class HzCodeBlock {
   statements: HzStatmt[]
-  protected _scope: HzBlock
   constructor(statements?: HzStatmt[]) {
     this.statements = statements ?? []
-  }
-  get scope(): HzBlock {
-    return this._scope
-  }
-  set scope(scope: HzBlock) {
-    this._scope = scope
-    scope.owner = this
   }
   toJSON() {
     return this.statements
