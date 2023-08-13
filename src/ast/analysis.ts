@@ -1,10 +1,10 @@
-import { HzFuncDecl, HzNaryFuncDecl, HzNullaryFuncDecl, HzObjDecl, HzVarDecl, getFuncSignature } from "./declaration.js"
-import { HzBinaryExpr, HzExpr, HzLiteralExpr, HzNaryFuncCallExpr, HzNullaryFuncCallExpr, HzVarExpr } from "./expr.js"
-import { TopLevel } from "./file.js"
-import { HzBoolLiteral, HzNumberLiteral, HzStringLiteral } from "./literal.js"
-import { HzBlock, HzNullaryFunc, HzObj, HzVar, } from "./scope.js"
-import { HzCodeBlock, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt } from "./statement.js"
-import { SoftKeyword } from "./token.js"
+import { HzFuncDecl, HzNaryFuncDecl, HzNullaryFuncDecl, HzObjDecl, HzVarDecl, getFuncSignature } from "../parse/declaration.js"
+import { HzBinaryExpr, HzExpr, HzLiteralExpr, HzNaryFuncCallExpr, HzNullaryFuncCallExpr, HzVarExpr } from "../parse/expr.js"
+import { TopLevel } from "../parse/file.js"
+import { HzBoolLiteral, HzNumberLiteral, HzStringLiteral } from "../parse/literal.js"
+import { HzBlock, HzNullaryFunc, HzObj, HzVar, } from "../scope.js"
+import { HzCodeBlock, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt } from "../parse/statement.js"
+import { SoftKeyword } from "../lex/token.js"
 
 export function semanticAnalyze(topLevels: TopLevel[], global?: HzBlock) {
   global ??= new HzBlock()

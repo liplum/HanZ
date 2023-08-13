@@ -1,4 +1,4 @@
-import { HzBlock, HzObj, HzScoped } from "./scope"
+import { HzBlock, HzObj, HzScoped } from "../scope"
 import { HzCodeBlock } from "./statement"
 
 export const enum DeclType {

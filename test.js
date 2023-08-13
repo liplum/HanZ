@@ -1,7 +1,7 @@
 /* eslint-disable quotes */
 import test from "ava"
-import { lex } from "./dist/lexer.js"
-import { parse } from "./dist/parser.js"
+import { lex } from "./dist/lex/lexer.js"
+import { parse } from "./dist/parse/parser.js"
 import { TokenType } from "./dist/token.js"
 test("[lex] simple expr", t => {
   const source = "5.14+16*3"

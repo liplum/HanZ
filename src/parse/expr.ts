@@ -1,5 +1,5 @@
 import { HzLiteral } from "./literal.js"
-import { Operator } from "./token.js"
+import { Operator } from "../lex/token.js"
 
 export const enum ExprType {
   var = "var",

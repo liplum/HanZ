@@ -1,6 +1,6 @@
 import { HzVarDecl } from "./declaration"
 import { HzExpr } from "./expr"
-import { HzBlock, HzScoped } from "./scope"
+import { HzBlock, HzScoped } from "../scope"
 
 export enum StatmtType {
   if = "if",

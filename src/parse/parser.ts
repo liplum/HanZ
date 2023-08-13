@@ -3,7 +3,7 @@ import { HzFuncCallExpr, HzNaryCallSelector, HzExpr, HzBinaryExpr, HzLiteralExpr
 import { TopLevel } from "./file.js"
 import { HzBoolLiteral, HzNullLiteral, HzNumberLiteral, HzStringLiteral, HzUndefinedLiteral } from "./literal.js"
 import { HzBreakStatmt, HzCodeBlock, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt } from "./statement.js"
-import { Keyword, Operator as Op, SoftKeyword, Token, TokenType, isAssign } from "./token.js"
+import { Keyword, Operator as Op, SoftKeyword, Token, TokenType, isAssign } from "../lex/token.js"
 
 const opPrecedences = {
   [Op.plus]: 2,

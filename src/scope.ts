@@ -1,5 +1,5 @@
-import { NaryFuncSelectorDecl } from "./declaration"
-import { HzNaryCallSelector } from "./expr"
+import { NaryFuncSelectorDecl } from "./parse/declaration"
+import { HzNaryCallSelector } from "./parse/expr"
 
 export interface HzScoped<TScope = HzBlock> {
   get scope(): TScope

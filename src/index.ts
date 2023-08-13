@@ -1,6 +1,6 @@
-import { semanticAnalyze } from "./analysis.js"
-import { lex } from "./lexer.js"
-import { ParseError, parse } from "./parser.js"
+import { semanticAnalyze } from "./ast/analysis.js"
+import { lex } from "./lex/lexer.js"
+import { ParseError, parse } from "./parse/parser.js"
 const source =
     `
 对象 账户【

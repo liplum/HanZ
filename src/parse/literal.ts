@@ -1,4 +1,4 @@
-import { SoftKeyword } from "./token.js"
+import { SoftKeyword } from "../lex/token.js"
 
 export enum LiteralType {
   string = "string",
