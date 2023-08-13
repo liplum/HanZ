@@ -1,5 +1,4 @@
 import { Operator } from "../lex/token"
-import { HzObjDecl } from "../parse/declaration"
 
 export class ASTNode {
   parent?: ASTNode
@@ -20,10 +19,10 @@ export class BlockNode extends ASTNode {
   findRef(name: string): RefNode | undefined {
     return this.locals.get(name) ?? this.parent?.findRef(name)
   }
-  defineLocal(local: LocalVarNode): boolean {
-    if (this.locals.has(local.name)) return false
+  defineLocal(local: LocalVarNode): void {
+    if (this.locals.has(local.name))
+      throw new ASTNodeDefinedError("Local variable already defined in block", this, local)
     local.parent = this
-    return true
   }
   addStatement(statement: StatementNode): true {
     this.statements.push(statement)
@@ -44,6 +43,10 @@ export class RefNode extends ASTNode {
 export class LocalVarNode extends RefNode {
 }
 
+export class ParamNode extends LocalVarNode {
+  declare parent: FuncNode
+}
+
 export class FieldNode extends RefNode {
   declare parent: ObjNode
   constructor(name: string) {
@@ -60,30 +63,30 @@ export class ObjNode extends RefNode {
   findRef(name: string): RefNode | undefined {
     return this.members.get(name) ?? this.parent?.findRef(name)
   }
-  defineMember(member: FieldNode | FuncNode) {
-    if (this.members.has(member.name)) return false
+  defineMember(member: FieldNode | FuncNode): void {
+    if (this.members.has(member.name))
+      throw new ASTNodeDefinedError("Member already defined in object", this, member)
     member.parent = this
-    return true
   }
 }
 
 export class FuncNode extends RefNode {
   protected body: BlockNode
-  protected params: Map<string, LocalVarNode> = new Map()
+  protected params: Map<string, ParamNode> = new Map()
   constructor(name: string) {
     super(name)
     this.constant = true
   }
-  defParam(param: LocalVarNode): boolean {
-    if (this.params.has(param.name)) return false
+  defParam(param: ParamNode): void {
+    if (this.params.has(param.name))
+      throw new ASTNodeDefinedError("Member already defined in function", this, param)
     param.parent = this
-    return true
   }
-  defBody(body: BlockNode): boolean {
-    if (this.body) return false
+  defBody(body: BlockNode): void {
+    if (this.body)
+      throw new ASTNodeDefinedError("Body already defined in function", this, body)
     this.body = body
     body.parent = this
-    return true
   }
 }
 
@@ -107,7 +110,6 @@ export class ObjMethodNode extends FuncNode {
   declare parent: ObjNode
   constructor(name: string) {
     super(name)
-    this.defParam(new SelfRefNode())
     this.constant = true
   }
 }
@@ -148,11 +150,11 @@ export class StatementNode extends ASTNode {
 
 export class ExprStatementNode extends StatementNode {
   protected expr: ExprNode
-  defineExpr(expr: ExprNode): boolean {
-    if (this.expr) return false
+  defineExpr(expr: ExprNode): void {
+    if (this.expr)
+      throw new ASTNodeDefinedError("Expr already defined in statement", this, expr)
     this.expr = expr
     expr.parent = this
-    return true
   }
 }
 
@@ -160,71 +162,82 @@ export class IfStatementNode extends StatementNode {
   protected condition: ExprNode
   protected consequent: BlockNode
   protected alternate?: BlockNode
-  defineCondition(condition: ExprNode): boolean {
-    if (this.condition) return false
+  defineCondition(condition: ExprNode): void {
+    if (this.condition)
+      throw new ASTNodeDefinedError("Condition already defined in if", this, condition)
     this.condition = condition
     condition.parent = this
-    return true
   }
-  defineConsequent(consequent: BlockNode): boolean {
-    if (this.consequent) return false
+  defineConsequent(consequent: BlockNode): void {
+    if (this.consequent)
+      throw new ASTNodeDefinedError("Consequent already defined in if", this, consequent)
     this.consequent = consequent
     consequent.parent = this
-    return true
   }
-  defineAlternate(alternate: BlockNode): boolean {
-    if (this.alternate) return false
+  defineAlternate(alternate: BlockNode): void {
+    if (this.alternate)
+      throw new ASTNodeDefinedError("Alternate already defined in if", this, alternate)
     this.alternate = alternate
     alternate.parent = this
-    return true
   }
 }
 
 export class WhileStatementNode extends StatementNode {
   protected condition: ExprNode
   protected body: BlockNode
-  defineCondition(condition: ExprNode): boolean {
-    if (this.condition) return false
+  defineCondition(condition: ExprNode): void {
+    if (this.condition)
+      throw new ASTNodeDefinedError("Condition already defined in while", this, condition)
     this.condition = condition
     condition.parent = this
-    return true
   }
-  defineBody(body: BlockNode): boolean {
-    if (this.body) return false
+  defineBody(body: BlockNode): void {
+    if (this.body)
+      throw new ASTNodeDefinedError("Body already defined in while", this, body)
     this.body = body
     body.parent = this
-    return true
   }
 }
 
 export class ReturnStatementNode extends StatementNode {
   protected value: ExprNode
-  defValue(value: ExprNode): boolean {
-    if (this.value) return false
+  defValue(value: ExprNode): void {
+    if (this.value)
+      throw new ASTNodeDefinedError("Value already defined in return", this, value)
     this.value = value
     value.parent = this
-    return true
   }
 }
 
 export class InitStatementNode extends StatementNode {
   protected lvalue: LocalVarNode
-  protected value: ExprNode
-  defVar(lvalue: LocalVarNode): boolean {
-    if (this.lvalue) return false
+  protected rvalue: ExprNode
+  defLvalue(lvalue: LocalVarNode): void {
+    if (this.lvalue)
+      throw new ASTNodeDefinedError("Lvalue already defined in init", this, lvalue)
     for (let cur = this.parent; cur !== undefined; cur = cur.parent) {
       if (cur instanceof BlockNode) {
-        if (!cur.defineLocal(lvalue)) return false
+        cur.defineLocal(lvalue)
         break
       }
     }
     this.lvalue = lvalue
-    return true
   }
-  defValue(value: ExprNode): boolean {
-    if (this.value) return false
-    this.value = value
-    value.parent = this
-    return true
+  defRvalue(rvalue: ExprNode): void {
+    if (this.rvalue)
+      throw new ASTNodeDefinedError("Rvalue already defined in init", this, rvalue)
+    this.rvalue = rvalue
+    rvalue.parent = this
+  }
+}
+
+export class ASTNodeDefinedError extends Error {
+  parent: ASTNode
+  node: ASTNode
+  constructor(message: string, parent: ASTNode, node: ASTNode) {
+    super(message)
+    this.name = this.constructor.name
+    this.parent = parent
+    this.node = node
   }
 }

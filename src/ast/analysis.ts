@@ -4,7 +4,8 @@ import { HzFileDef, TopLevel } from "../parse/file.js"
 import { HzBoolLiteral, HzNumberLiteral, HzStringLiteral } from "../parse/literal.js"
 import { HzCodeBlock, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt } from "../parse/statement.js"
 import { SoftKeyword } from "../lex/token.js"
-import { ASTNode, BlockNode, CtorNode, ExprNode, ExprStatementNode, FieldNode, FuncNode, IfStatementNode, LiteralNode, LocalVarNode, ObjMethodNode, ObjNode, RefExprNode, ReturnStatementNode, SelfRefNode, StatementNode, WhileStatementNode } from "./node.js"
+import { ASTNode, BlockNode, CtorNode, ExprNode, ExprStatementNode, FieldNode, FuncNode, IfStatementNode, InitStatementNode, LiteralNode, LocalVarNode, ObjMethodNode, ObjNode, ParamNode, RefExprNode, ReturnStatementNode, SelfRefNode, StatementNode, WhileStatementNode } from "./node.js"
+type NodeLinker<T> = (node: T) => void
 
 /**
  * Semantic analysis consists of two phrases:
@@ -23,9 +24,12 @@ export function semanticAnalyze(fileDef: HzFileDef): BlockNode {
       file.defineLocal(funNode)
       buildFuncDecl(funNode, topLevel)
     } else if (topLevel instanceof HzExprStatmt) {
-      buildExprStatmt(file, topLevel)
+      const exprStatmt = new ExprStatementNode()
+      buildExprStatmt(exprStatmt, topLevel)
     } else if (topLevel instanceof HzInitStatmt) {
-      visitInitStatmt(file, topLevel)
+      const initNode = new InitStatementNode()
+      file.addStatement(initNode)
+      buildInitStatmt(initNode, topLevel)
     }
   }
   return file
@@ -52,7 +56,7 @@ function buildObjDecl(node: ObjNode, obj: HzObjDecl): void {
 function buildCtorDecl(node: CtorNode, ctor: HzFuncDecl): void {
   if (ctor instanceof HzNaryFuncDecl) {
     for (const { selector, param } of ctor.selectors) {
-      const paramNode = new LocalVarNode(param ?? selector)
+      const paramNode = new ParamNode(param ?? selector)
       node.defParam(paramNode)
     }
   }
@@ -63,7 +67,7 @@ function buildCtorDecl(node: CtorNode, ctor: HzFuncDecl): void {
 function buildObjMethodDecl(node: ObjMethodNode, method: HzFuncDecl): void {
   if (method instanceof HzNaryFuncDecl) {
     for (const { selector, param } of method.selectors) {
-      const paramNode = new LocalVarNode(param ?? selector)
+      const paramNode = new ParamNode(param ?? selector)
       node.defParam(paramNode)
     }
   }
@@ -76,7 +80,7 @@ function buildObjMethodDecl(node: ObjMethodNode, method: HzFuncDecl): void {
 function buildFuncDecl(node: FuncNode, func: HzFuncDecl): void {
   if (func instanceof HzNaryFuncDecl) {
     for (const { selector, param } of func.selectors) {
-      const paramNode = new LocalVarNode(param ?? selector)
+      const paramNode = new ParamNode(param ?? selector)
       node.defParam(paramNode)
     }
   }
@@ -86,31 +90,40 @@ function buildFuncDecl(node: FuncNode, func: HzFuncDecl): void {
 }
 
 function buildCodeBlock(node: BlockNode, block: HzCodeBlock): void {
+  const linker = (sub: StatementNode) => node.addStatement(sub)
   for (const statmt of block) {
-    buildStatmt(statmt)
+    buildStatmt(statmt, linker)
   }
 }
 
-function buildStatmt(statmt: HzStatmt, parent: BlockNode): void {
+function buildStatmt(statmt: HzStatmt, linker: NodeLinker<StatementNode>): void {
   if (statmt instanceof HzIfStatmt) {
     const ifNode = new IfStatementNode()
+    linker(ifNode)
     buildIfStatmt(ifNode, statmt)
   } else if (statmt instanceof HzWhileStatmt) {
-    visitWhileStatmt(statmt)
+    const whileNode = new WhileStatementNode()
+    linker(whileNode)
+    buildWhileStatmt(whileNode, statmt)
   } else if (statmt instanceof HzInitStatmt) {
-    visitInitStatmt(statmt)
+    const initNode = new InitStatementNode()
+    linker(initNode)
+    buildInitStatmt(initNode, statmt)
   } else if (statmt instanceof HzExprStatmt) {
     const exprStatmtNode = new ExprStatementNode()
+    linker(exprStatmtNode)
     buildExprStatmt(exprStatmtNode, statmt)
   } else if (statmt instanceof HzReturnStatmt) {
-    visitReturnStatmt(statmt)
+    const returnNode = new ReturnStatementNode()
+    linker(returnNode)
+    buildReturnStatmt(returnNode, statmt)
   } else if (statmt instanceof HzVarDeclStatmt) {
-    visitVarDeclStatmt(statmt)
+    buildVarDeclStatmt(statmt, linker)
   }
 }
 
 function buildIfStatmt(node: IfStatementNode, statmt: HzIfStatmt): IfStatementNode {
-  buildExpr(statmt.condition, (sub) => node.defineCondition(sub))
+  buildExpr(statmt.condition, sub => node.defineCondition(sub))
   // consequent
   const consequentNode = new BlockNode()
   node.defineConsequent(consequentNode)
@@ -124,36 +137,32 @@ function buildIfStatmt(node: IfStatementNode, statmt: HzIfStatmt): IfStatementNo
   return node
 }
 
-function visitWhileStatmt(node: WhileStatementNode, statmt: HzWhileStatmt): void {
-  buildExpr(statmt.condition, (sub) => node.defineCondition(sub))
+function buildWhileStatmt(node: WhileStatementNode, statmt: HzWhileStatmt): void {
+  buildExpr(statmt.condition, sub => node.defineCondition(sub))
   const bodyNode = new BlockNode()
   buildCodeBlock(bodyNode, statmt.body)
 }
 
 function buildExprStatmt(node: ExprStatementNode, statmt: HzExprStatmt): void {
-  buildExpr(statmt.expr, (sub) => node.defineExpr(sub))
+  buildExpr(statmt.expr, sub => node.defineExpr(sub))
 }
 
-function visitReturnStatmt(node: ReturnStatementNode, statmt: HzReturnStatmt): void {
-  buildExpr(statmt.value, (sub) => node.defValue(sub))
+function buildReturnStatmt(node: ReturnStatementNode, statmt: HzReturnStatmt): void {
+  buildExpr(statmt.value, sub => node.defValue(sub))
 }
 
-function visitInitStatmt(node:,init: HzInitStatmt): void {
-  parent.defineVar(init.name)
-  buildExpr(init.value)
+function buildInitStatmt(node: InitStatementNode, init: HzInitStatmt): void {
+  const initVar = new LocalVarNode(init.name)
+  node.defLvalue(initVar)
+  buildExpr(init.value, sub => node.defRvalue(sub))
 }
 
-function visitVarDeclStatmt(statmt: HzVarDeclStatmt): void {
-  visitVarDecl(statmt.declare)
-}
-
-function visitVarDecl(decl: HzVarDecl) {
-  for (const name of decl.names) {
-    parent.defineVar(name)
+function buildVarDeclStatmt(statmt: HzVarDeclStatmt, linker: NodeLinker<LocalVarNode>): void {
+  for (const name of statmt.declare.names) {
+    linker(new LocalVarNode(name))
   }
 }
 
-type NodeLinker<T> = (node: T) => void
 function buildExpr(expr: HzExpr, linker: NodeLinker<ExprNode>): void {
   if (expr instanceof HzLiteralExpr) {
     buildLiteralExpr(expr, linker)

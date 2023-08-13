@@ -232,11 +232,8 @@ export function lex(source: string) {
 
 export class LexError extends Error {
   line: number
-
   column: number
-
   pos: number
-
   constructor(message: string, line: number, pos: number) {
     super(message)
     this.name = this.constructor.name
