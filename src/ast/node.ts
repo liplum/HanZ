@@ -17,6 +17,7 @@ export class BlockNode extends ASTNode {
     if (this.locals.has(local.name))
       throw new ASTNodeDefinedError("Local variable already defined in block", this, local)
     local.parent = this
+    this.locals.set(local.name, local)
   }
   addStatement(statement: StatementNode): true {
     this.statements.push(statement)
@@ -35,6 +36,7 @@ export class FileNode extends BlockNode {
     if (this.locals.has(symbol.name))
       throw new ASTNodeDefinedError("Top-level already defined in file", this, symbol)
     symbol.parent = this
+    this.locals.set(symbol.name, symbol)
   }
 }
 
@@ -77,25 +79,29 @@ export class ObjNode extends RefNode {
       ?? this.classMethods.get(name)
       ?? this.parent?.findRef(name)
   }
-  defineCtor(func: CtorNode): void {
-    if (this.ctors.has(func.name))
-      throw new ASTNodeDefinedError("Constructor already defined in object", this, func)
-    func.parent = this
+  defineCtor(ctor: CtorNode): void {
+    if (this.ctors.has(ctor.name))
+      throw new ASTNodeDefinedError("Constructor already defined in object", this, ctor)
+    ctor.parent = this
+    this.ctors.set(ctor.name, ctor)
   }
   defineField(field: FieldNode): void {
     if (this.fields.has(field.name))
       throw new ASTNodeDefinedError("Field already defined in object", this, field)
     field.parent = this
+    this.fields.set(field.name, field)
   }
   defineObjMethod(objMethod: ObjMethodNode): void {
-    if (this.fields.has(objMethod.name))
+    if (this.objMethods.has(objMethod.name))
       throw new ASTNodeDefinedError("Object method already defined in object", this, objMethod)
     objMethod.parent = this
+    this.objMethods.set(objMethod.name, objMethod)
   }
   defineClassMethod(classMethod: ClassMethodNode): void {
-    if (this.fields.has(classMethod.name))
+    if (this.classMethods.has(classMethod.name))
       throw new ASTNodeDefinedError("Class method already defined in object", this, classMethod)
     classMethod.parent = this
+    this.classMethods.set(classMethod.name, classMethod)
   }
 }
 
@@ -110,6 +116,7 @@ export class FuncNode extends RefNode {
     if (this.params.has(param.name))
       throw new ASTNodeDefinedError("Member already defined in function", this, param)
     param.parent = this
+    this.params.set(param.name, param)
   }
   defBody(body: BlockNode): void {
     if (this.body)

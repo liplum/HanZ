@@ -63,6 +63,7 @@ function buildCtorDecl(node: CtorNode, ctor: HzFuncDecl): void {
     }
   }
   const codeBlockNode = new BlockNode()
+  node.defBody(codeBlockNode)
   buildCodeBlock(codeBlockNode, ctor.body)
 }
 

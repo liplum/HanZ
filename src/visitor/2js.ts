@@ -2,7 +2,7 @@ import { Writable } from "stream"
 import { BinaryExprNode, BlockNode, BreakStatementNode, ContinueStatementNode, ExprNode, ExprStatementNode, FieldNode, FileNode, FuncCallExprNode, FuncNode, IfStatementNode, InitStatementNode, LiteralExprNode, LocalVarNode, ObjMethodNode, ObjNode, RefExprNode, ReturnStatementNode, StatementNode, WhileStatementNode } from "../ast/node.js"
 
 export function transpile2Js(fileNode: FileNode, output: Writable) {
-  for (const symbol of fileNode.locals) {
+  for (const symbol of fileNode.locals.values()) {
     if (symbol instanceof ObjNode) {
       genObj(symbol)
     } else if (symbol instanceof FuncNode) {
@@ -13,15 +13,19 @@ export function transpile2Js(fileNode: FileNode, output: Writable) {
     genStatmt(statmt)
   }
 
+  output.end()
+
   function genObj(obj: ObjNode): void {
     output.write(`const obj$${obj.name}={`)
-    for (const method of obj.objMethods.values()) {
-      genObjMethod(method)
-    }
     for (const ctor of obj.ctors.values()) {
       output.write(`init$${ctor.name}`)
       genFuncParam(ctor)
       genCtorCodeBlock(ctor.body)
+      output.write(",")
+    }
+    for (const method of obj.objMethods.values()) {
+      genObjMethod(method)
+      output.write(",")
     }
     output.write("}")
   }

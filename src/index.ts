@@ -1,7 +1,9 @@
+import { Writable } from "stream"
 import { SemanticAnalyzeError, semanticAnalyze } from "./ast/analysis.js"
 import { ASTNodeDefinedError } from "./ast/node.js"
 import { lex } from "./lex/lexer.js"
 import { ParseError, parse } from "./parse/parser.js"
+import { transpile2Js } from "./visitor/2js.js"
 const source =
   `
 对象 账户【
@@ -23,22 +25,13 @@ const source =
     返回 自己。
   】
 】
-
-// test instantiation
-账户甲 := 账户 新建。
-
-// test messaging
-账户甲 存入: 799。
-账户甲 取出: 199。
-
-// test method chaining
-账户甲 存入: 799, 取出: 199。
   `
 const tokens = lex(source)
 try {
-  const file = parse(tokens)
-  semanticAnalyze(file)
-  console.log(JSON.stringify(file.topLevels, null, 1))
+  const fileDef = parse(tokens)
+  const fileNode = semanticAnalyze(fileDef)
+  const compiled = await writeIntoString((writable) => transpile2Js(fileNode, writable))
+  console.log(compiled)
 } catch (e) {
   if (e instanceof ParseError) {
     const token = e.token
@@ -47,7 +40,9 @@ try {
   } else if (e instanceof ASTNodeDefinedError) {
     console.error(e)
   } else if (e instanceof SemanticAnalyzeError) {
-    console.log(e)
+    console.error(e)
+  } else {
+    console.error(e)
   }
 }
 
@@ -55,4 +50,24 @@ function nearby(source: string, pos: number): string {
   const start = Math.max(0, pos - 5)
   const end = Math.min(pos + 5, source.length)
   return source.substring(start, end)
+}
+
+async function writeIntoString(writing: (writable: Writable) => void): Promise<string> {
+  let res = ""
+  const output = new Writable({
+    write(chunk: Buffer, encoding, next) {
+      const data = chunk.toString()
+      res += data
+      next()
+    },
+  })
+  writing(output)
+  return new Promise((resolve, reject) => {
+    output.on("close", () => {
+      resolve(res)
+    })
+    output.on("error", (err) => {
+      reject(err)
+    })
+  })
 }
