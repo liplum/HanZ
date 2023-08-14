@@ -28,7 +28,17 @@ const source =
     返回 自己。
   】
 】
-  `
+
+// test instantiation
+账户甲 := 账户 新建。
+
+// test messaging
+账户甲 存入: 799。
+账户甲 取出: 199。
+
+// test method chaining
+账户甲 存入: 799, 取出: 199。
+`
 const tokens = lex(source)
 try {
   const fileDef = parse(tokens)

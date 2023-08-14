@@ -167,7 +167,7 @@ export function transpile2Js(fileNode: FileNode, output: Writable) {
     if (expr.caller) {
       if (!expr.caller.isSingle) output.write("(")
       genExpr(expr.caller)
-      if (!expr.caller.isSingle) output.write("(")
+      if (!expr.caller.isSingle) output.write(")")
       output.write(".")
     }
     output.write(expr.func.name)
@@ -185,7 +185,7 @@ export function transpile2Js(fileNode: FileNode, output: Writable) {
     if (expr.caller) {
       if (!expr.caller.isSingle) output.write("(")
       genExpr(expr.caller)
-      if (!expr.caller.isSingle) output.write("(")
+      if (!expr.caller.isSingle) output.write(")")
       output.write(".")
     }
     output.write(expr.funcName)

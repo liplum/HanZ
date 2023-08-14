@@ -21,6 +21,7 @@ export function semanticAnalyze(fileDef: HzFileDef): FileNode {
       buildFuncDecl(funNode, topLevel)
     } else if (topLevel instanceof HzExprStatmt) {
       const exprStatmt = new ExprStatementNode()
+      fileNode.addStatement(exprStatmt)
       buildExprStatmt(exprStatmt, topLevel)
     } else if (topLevel instanceof HzInitStatmt) {
       const initNode = new InitStatementNode()

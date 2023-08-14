@@ -212,7 +212,7 @@ export class FuncCallExprNode extends ExprNode {
   func: FuncNode
   args: ExprNode[] = []
   get isSingle(): boolean {
-    return false
+    return true
   }
   setCaller(caller: ExprNode) {
     if (this.caller)
@@ -236,7 +236,7 @@ export class DynamicFuncCallExprNode extends ExprNode {
   caller?: ExprNode
   args: ExprNode[] = []
   get isSingle(): boolean {
-    return false
+    return true
   }
   setCaller(caller: ExprNode) {
     if (this.caller)
