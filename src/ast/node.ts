@@ -1,9 +1,16 @@
 import { Operator } from "../lex/token"
 
+export type ASTNodeClass<T = unknown> = { new(...args: unknown[]): T }
 export class ASTNode {
   parent?: ASTNode
   findRef(name: string): RefNode | undefined {
     return this.parent?.findRef(name)
+  }
+  hasAncestorOf(clz: ASTNodeClass<unknown>): boolean {
+    for (let cur = this.parent; cur !== undefined; cur = cur.parent) {
+      if (cur instanceof clz) return true
+    }
+    return false
   }
 }
 
@@ -124,6 +131,9 @@ export class FuncNode extends RefNode {
     this.body = body
     body.parent = this
   }
+  findRef(name: string): RefNode | undefined {
+    return this.params.get(name) ?? this.parent?.findRef(name)
+  }
 }
 
 export class ClassMethodNode extends FuncNode {
@@ -157,8 +167,8 @@ export class SelfRefNode extends LocalVarNode {
   }
 }
 
-export class ExprNode extends ASTNode {
-
+export abstract class ExprNode extends ASTNode {
+  abstract get isSingle(): boolean
 }
 
 export class RefExprNode extends ExprNode {
@@ -166,6 +176,9 @@ export class RefExprNode extends ExprNode {
   constructor(ref: RefNode) {
     super()
     this.ref = ref
+  }
+  get isSingle(): boolean {
+    return true
   }
 }
 
@@ -176,6 +189,9 @@ export class BinaryExprNode extends ExprNode {
   constructor(op: Operator) {
     super()
     this.op = op
+  }
+  get isSingle(): boolean {
+    return false
   }
   defLeft(left: ExprNode): void {
     if (this.left)
@@ -195,10 +211,14 @@ export class FuncCallExprNode extends ExprNode {
   caller?: ExprNode
   func: FuncNode
   args: ExprNode[] = []
+  get isSingle(): boolean {
+    return false
+  }
   setCaller(caller: ExprNode) {
     if (this.caller)
       throw new ASTNodeDefinedError("call already defined in func call", this, caller)
     this.caller = caller
+    caller.parent = this
   }
   setFunc(func: FuncNode) {
     if (this.func)
@@ -211,9 +231,31 @@ export class FuncCallExprNode extends ExprNode {
   }
 }
 
+export class DynamicFuncCallExprNode extends ExprNode {
+  funcName: string
+  caller?: ExprNode
+  args: ExprNode[] = []
+  get isSingle(): boolean {
+    return false
+  }
+  setCaller(caller: ExprNode) {
+    if (this.caller)
+      throw new ASTNodeDefinedError("call already defined in func call", this, caller)
+    this.caller = caller
+    caller.parent = this
+  }
+  addArg(arg: ExprNode) {
+    this.args.push(arg)
+    arg.parent = this
+  }
+}
+
 export class LiteralExprNode<T = unknown> extends ExprNode {
   raw: string
   value: T
+  get isSingle(): boolean {
+    return true
+  }
 }
 
 export class StatementNode extends ASTNode {

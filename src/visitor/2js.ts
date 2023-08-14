@@ -1,5 +1,5 @@
 import { Writable } from "stream"
-import { BinaryExprNode, BlockNode, BreakStatementNode, ContinueStatementNode, ExprNode, ExprStatementNode, FieldNode, FileNode, FuncCallExprNode, FuncNode, IfStatementNode, InitStatementNode, LiteralExprNode, LocalVarNode, ObjMethodNode, ObjNode, RefExprNode, ReturnStatementNode, StatementNode, WhileStatementNode } from "../ast/node.js"
+import { BinaryExprNode, BlockNode, BreakStatementNode, ContinueStatementNode, CtorNode, DynamicFuncCallExprNode, ExprNode, ExprStatementNode, FieldNode, FileNode, FuncCallExprNode, FuncNode, IfStatementNode, InitStatementNode, LiteralExprNode, ObjMethodNode, ObjNode, RefExprNode, ReturnStatementNode, SelfRefNode, StatementNode, WhileStatementNode } from "../ast/node.js"
 
 export function transpile2Js(fileNode: FileNode, output: Writable) {
   for (const symbol of fileNode.locals.values()) {
@@ -16,60 +16,50 @@ export function transpile2Js(fileNode: FileNode, output: Writable) {
   output.end()
 
   function genObj(obj: ObjNode): void {
-    output.write(`const obj$${obj.name}={`)
+    output.write(`class ${obj.name}{`)
     for (const ctor of obj.ctors.values()) {
-      output.write(`init$${ctor.name}`)
-      genFuncParam(ctor)
+      output.write(`static init$${ctor.name}`)
+      genFuncParams(ctor)
       genCtorCodeBlock(ctor.body)
-      output.write(",")
+    }
+    for (const field of obj.fields.values()) {
+      output.write(`${field.name}(){return this._$${field.name};}`)
     }
     for (const method of obj.objMethods.values()) {
-      genObjMethod(method)
-      output.write(",")
+      output.write(`${method.name}`)
+      genFuncParams(method)
+      genBlock(method.body)
     }
     output.write("}")
-  }
 
-  function genObjMethod(method: ObjMethodNode): void {
-    output.write(`${method.name}`)
-    genMethodParam(method)
-    genBlock(method.body)
+
+    function genCtorCodeBlock(block: BlockNode): void {
+      output.write("{")
+      output.write(`const self=new ${obj.name}();`)
+      for (const statmt of block.statements) {
+        genStatmt(statmt)
+      }
+      output.write("return self;")
+      output.write("}")
+    }
   }
 
   function genFuncDecl(func: FuncNode): void {
     output.write(`function ${func.name}`)
-    genFuncParam(func)
+    genFuncParams(func)
     genBlock(func.body)
   }
-
-  function genMethodParam(func: FuncNode): void {
-    const params = Array.from(func.params.values()).map(p => p.name)
-    params.unshift("self")
-    output.write("(")
-    output.write(params.join(","))
-    output.write(")")
-  }
-
-  function genFuncParam(func: FuncNode): void {
+  function genFuncParams(func: FuncNode): void {
     const params = Array.from(func.params.values()).map(p => p.name)
     output.write("(")
     output.write(params.join(","))
     output.write(")")
-  }
-
-  function genCtorCodeBlock(block: BlockNode): void {
-    output.write("{")
-    output.write("const self={};self.$class=this;")
-    for (const statmt of block.statements) {
-      genStatmt(statmt)
-    }
-    output.write("return self;")
-    output.write("}")
   }
 
   function genBlock(block: BlockNode): void {
     output.write("{")
     for (const local of block.locals.values()) {
+      if (local instanceof SelfRefNode) continue
       if (local.constant) {
         output.write(`const ${local.name};`)
       } else {
@@ -127,7 +117,7 @@ export function transpile2Js(fileNode: FileNode, output: Writable) {
     output.write(";")
   }
   function genReturnStatmt(statmt: ReturnStatementNode): void {
-    output.write("return")
+    output.write("return ")
     genExpr(statmt.value)
     output.write(";")
   }
@@ -141,9 +131,11 @@ export function transpile2Js(fileNode: FileNode, output: Writable) {
     if (expr instanceof LiteralExprNode) {
       genLiteralExpr(expr)
     } else if (expr instanceof RefExprNode) {
-      genVarExpr(expr)
+      genRefExpr(expr)
     } else if (expr instanceof FuncCallExprNode) {
       genFuncCallExpr(expr)
+    } else if (expr instanceof DynamicFuncCallExprNode) {
+      genDynamicFuncCallExpr(expr)
     } else if (expr instanceof BinaryExprNode) {
       genBinaryExpr(expr)
     }
@@ -151,19 +143,77 @@ export function transpile2Js(fileNode: FileNode, output: Writable) {
   function genLiteralExpr(expr: LiteralExprNode) {
     output.write(expr.raw)
   }
-  function genVarExpr(expr: RefExprNode) {
-    output.write(expr.ref.name)
+  function genRefExpr(expr: RefExprNode) {
+    const ref = expr.ref
+    if (ref instanceof SelfRefNode) {
+      if (expr.hasAncestorOf(ObjMethodNode)) {
+        output.write("this")
+      } else {
+        throw new TranspileError("Unknown ref", ref)
+      }
+    } else if (ref instanceof FieldNode) {
+      if (expr.hasAncestorOf(ObjMethodNode)) {
+        output.write(`this._$${ref.name}`)
+      } else if (expr.hasAncestorOf(CtorNode)) {
+        output.write(`self._$${ref.name}`)
+      } else {
+        throw new TranspileError("Unknown ref", ref)
+      }
+    } else {
+      output.write(expr.ref.name)
+    }
   }
   function genFuncCallExpr(expr: FuncCallExprNode) {
     if (expr.caller) {
-
+      if (!expr.caller.isSingle) output.write("(")
+      genExpr(expr.caller)
+      if (!expr.caller.isSingle) output.write("(")
+      output.write(".")
     }
+    output.write(expr.func.name)
+    output.write("(")
+    for (let i = 0; i < expr.args.length; i++) {
+      const arg = expr.args[i]
+      genExpr(arg)
+      if (i < expr.args.length - 1) {
+        output.write(",")
+      }
+    }
+    output.write(")")
+  }
+  function genDynamicFuncCallExpr(expr: DynamicFuncCallExprNode) {
+    if (expr.caller) {
+      if (!expr.caller.isSingle) output.write("(")
+      genExpr(expr.caller)
+      if (!expr.caller.isSingle) output.write("(")
+      output.write(".")
+    }
+    output.write(expr.funcName)
+    output.write("(")
+    for (let i = 0; i < expr.args.length; i++) {
+      const arg = expr.args[i]
+      genExpr(arg)
+      if (i < expr.args.length - 1) {
+        output.write(",")
+      }
+    }
+    output.write(")")
   }
   function genBinaryExpr(expr: BinaryExprNode) {
-    output.write("(")
+    const isOuter = !(expr.parent instanceof ExprNode)
+    if (!isOuter) output.write("(")
     genExpr(expr.left)
     output.write(expr.op)
     genExpr(expr.right)
-    output.write(")")
+    if (!isOuter) output.write(")")
+  }
+}
+
+
+export class TranspileError extends Error {
+  constructor(message: string, cause: unknown) {
+    super(message)
+    this.cause = cause
+    this.name = this.constructor.name
   }
 }

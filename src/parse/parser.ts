@@ -369,10 +369,10 @@ export function parse(tokens: Token[]): HzFileDef {
       if (nextToken?.type === TokenType.identifier) {
         advance()
         // function call
-        return parseFuncCallChainingExpr(left ?? new HzVarExpr({ name: t.lexeme }))
+        return parseFuncCallExpr(new HzVarExpr({ name: t.lexeme }))
       } else if (nextToken?.type === TokenType.colon) {
         // independent function call
-        return parseFuncCallChainingExpr()
+        return parseFuncCallExpr()
       } else if (t.lexeme === SoftKeyword.true || t.lexeme === SoftKeyword.false) {
         return new HzLiteralExpr(new HzBoolLiteral(t.lexeme))
       } else if (t.lexeme === SoftKeyword.null) {
@@ -387,9 +387,9 @@ export function parse(tokens: Token[]): HzFileDef {
     throw new ParseError("Unrecognized primary token", t)
   }
 
-  function parseFuncCallChainingExpr(caller?: HzExpr): HzFuncCallExpr {
+  function parseFuncCallExpr(caller?: HzExpr): HzFuncCallExpr {
     for (; ;) {
-      caller = parseFuncCallExpr(caller)
+      caller = parseFuncCallExprImpl(caller)
       if (tryConsume(TokenType.comma)) {
         // method chaining
         continue
@@ -397,28 +397,28 @@ export function parse(tokens: Token[]): HzFileDef {
       break
     }
     return caller
-  }
 
-  function parseFuncCallExpr(caller?: HzExpr): HzFuncCallExpr {
-    const selectors: HzNaryCallSelector[] = []
-    do {
-      const selector = peek()
-      if (selector.type !== TokenType.identifier) {
-        throw new ParseError("Expect selector", selector)
-      }
-      advance()
-      if (!tryConsume(TokenType.colon)) {
-        if (selectors.length === 0) {
-          // nullary
-          return new HzNullaryFuncCallExpr({ caller, selector: selector.lexeme })
-        } else {
-          throw new ParseError("Expect ':' after first selector", peek())
+    function parseFuncCallExprImpl(caller?: HzExpr): HzFuncCallExpr {
+      const selectors: HzNaryCallSelector[] = []
+      do {
+        const selector = peek()
+        if (selector.type !== TokenType.identifier) {
+          throw new ParseError("Expect selector", selector)
         }
-      }
-      const arg = parseExpr()
-      selectors.push({ selector: selector.lexeme, arg })
-    } while (peek().type === TokenType.identifier)
-    return new HzNaryFuncCallExpr({ caller, selectors })
+        advance()
+        if (!tryConsume(TokenType.colon)) {
+          if (selectors.length === 0) {
+            // nullary
+            return new HzNullaryFuncCallExpr({ caller, selector: selector.lexeme })
+          } else {
+            throw new ParseError("Expect ':' after first selector", peek())
+          }
+        }
+        const arg = parseExpr()
+        selectors.push({ selector: selector.lexeme, arg })
+      } while (peek().type === TokenType.identifier)
+      return new HzNaryFuncCallExpr({ caller, selectors })
+    }
   }
 
   function advance(): Token {

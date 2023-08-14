@@ -4,6 +4,9 @@ import { ASTNodeDefinedError } from "./ast/node.js"
 import { lex } from "./lex/lexer.js"
 import { ParseError, parse } from "./parse/parser.js"
 import { transpile2Js } from "./visitor/2js.js"
+import { install as installSourceMap } from "source-map-support"
+installSourceMap()
+
 const source =
   `
 对象 账户【
@@ -33,17 +36,16 @@ try {
   const compiled = await writeIntoString((writable) => transpile2Js(fileNode, writable))
   console.log(compiled)
 } catch (e) {
+  const full = JSON.stringify(e)
   if (e instanceof ParseError) {
     const token = e.token
-    console.error(JSON.stringify(token), e)
     console.log(nearby(source, token.pos))
   } else if (e instanceof ASTNodeDefinedError) {
-    console.error(e)
+    //
   } else if (e instanceof SemanticAnalyzeError) {
-    console.error(e)
-  } else {
-    console.error(e)
+    //
   }
+  console.error(e, full)
 }
 
 function nearby(source: string, pos: number): string {

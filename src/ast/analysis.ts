@@ -1,10 +1,10 @@
-import { HzFuncDecl, HzNaryFuncDecl, HzObjDecl, getFuncSignature, getNaryFuncRepr } from "../parse/declaration.js"
+import { HzFuncDecl, HzNaryFuncDecl, HzObjDecl, getFuncSignature } from "../parse/declaration.js"
 import { HzBinaryExpr, HzExpr, HzLiteralExpr, HzNaryFuncCallExpr, HzNullaryFuncCallExpr, HzVarExpr } from "../parse/expr.js"
 import { HzFileDef } from "../parse/file.js"
 import { HzBoolLiteral, HzNumberLiteral, HzStringLiteral } from "../parse/literal.js"
 import { HzBreakStatmt, HzCodeBlock, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzWhileStatmt } from "../parse/statement.js"
 import { SoftKeyword } from "../lex/token.js"
-import { ASTNode, BinaryExprNode, BlockNode, BreakStatementNode, ClassMethodNode, CtorNode, ExprNode, ExprStatementNode, FieldNode, FileNode, FuncCallExprNode, FuncNode, IfStatementNode, InitStatementNode, LiteralExprNode, LocalVarNode, ObjMethodNode, ObjNode, ParamNode, RefExprNode, ReturnStatementNode, SelfRefNode, StatementNode, WhileStatementNode } from "./node.js"
+import { ASTNode, BinaryExprNode, BlockNode, BreakStatementNode, ClassMethodNode, CtorNode, DynamicFuncCallExprNode, ExprNode, ExprStatementNode, FieldNode, FileNode, FuncCallExprNode, FuncNode, IfStatementNode, InitStatementNode, LiteralExprNode, LocalVarNode, ObjMethodNode, ObjNode, ParamNode, RefExprNode, ReturnStatementNode, SelfRefNode, StatementNode, WhileStatementNode } from "./node.js"
 type NodeLinker<T> = (node: T) => void
 
 export function semanticAnalyze(fileDef: HzFileDef): FileNode {
@@ -33,9 +33,7 @@ export function semanticAnalyze(fileDef: HzFileDef): FileNode {
 
 function buildObjDecl(node: ObjNode, obj: HzObjDecl): void {
   for (const field of obj.fields) {
-    for (const name of field.name) {
-      node.defineField(new FieldNode(name))
-    }
+    node.defineField(new FieldNode(field.name))
   }
   for (const ctor of obj.ctors) {
     const ctorNode = new CtorNode(ctor.signature)
@@ -105,42 +103,42 @@ function buildFuncDecl(node: FuncNode, func: HzFuncDecl): void {
 }
 
 function buildCodeBlock(node: BlockNode, block: HzCodeBlock): void {
-  const linker = (sub: StatementNode) => node.addStatement(sub)
+  const link = (sub: StatementNode) => node.addStatement(sub)
   for (const local of block.locals) {
     node.defineLocal(new LocalVarNode(local.name))
   }
   for (const statmt of block) {
-    buildStatmt(statmt, linker)
+    buildStatmt(statmt, link)
   }
 }
 
-function buildStatmt(statmt: HzStatmt, linker: NodeLinker<StatementNode>): void {
+function buildStatmt(statmt: HzStatmt, link: NodeLinker<StatementNode>): void {
   if (statmt instanceof HzIfStatmt) {
     const ifNode = new IfStatementNode()
-    linker(ifNode)
+    link(ifNode)
     buildIfStatmt(ifNode, statmt)
   } else if (statmt instanceof HzWhileStatmt) {
     const whileNode = new WhileStatementNode()
-    linker(whileNode)
+    link(whileNode)
     buildWhileStatmt(whileNode, statmt)
   } else if (statmt instanceof HzInitStatmt) {
     const initNode = new InitStatementNode()
-    linker(initNode)
+    link(initNode)
     buildInitStatmt(initNode, statmt)
   } else if (statmt instanceof HzExprStatmt) {
     const exprStatmtNode = new ExprStatementNode()
-    linker(exprStatmtNode)
+    link(exprStatmtNode)
     buildExprStatmt(exprStatmtNode, statmt)
   } else if (statmt instanceof HzReturnStatmt) {
     const returnNode = new ReturnStatementNode()
-    linker(returnNode)
+    link(returnNode)
     buildReturnStatmt(returnNode, statmt)
   } else if (statmt instanceof HzBreakStatmt) {
     const breakNode = new BreakStatementNode()
-    linker(breakNode)
+    link(breakNode)
   } else if (statmt instanceof HzContinueStatmt) {
     const continueNode = new BreakStatementNode()
-    linker(continueNode)
+    link(continueNode)
   }
 }
 
@@ -185,31 +183,43 @@ function buildInitStatmt(node: InitStatementNode, init: HzInitStatmt): void {
   buildExpr(init.value, node, sub => node.defRvalue(sub))
 }
 
-function buildExpr(expr: HzExpr, parent: ASTNode, linker: NodeLinker<ExprNode>): void {
+function buildExpr(expr: HzExpr, parent: ASTNode, link: NodeLinker<ExprNode>): void {
   if (expr instanceof HzLiteralExpr) {
     const node = new LiteralExprNode()
-    linker(node)
+    link(node)
     buildLiteralExpr(node, expr)
   } else if (expr instanceof HzVarExpr) {
     const varRef = parent.findRef(expr.name)
     if (varRef === undefined) throw new SemanticAnalyzeError(`${expr.name} not declared`, expr)
     const node = new RefExprNode(varRef)
-    linker(node)
+    link(node)
   } else if (expr instanceof HzNullaryFuncCallExpr) {
-    const node = new FuncCallExprNode()
-    linker(node)
-    const func = parent.findRef(getFuncSignature(expr.selector))
-    if (!(func instanceof FuncNode)) throw new SemanticAnalyzeError(`${expr.selector} not declared`, node)
-    node.setFunc(func)
+    const signature = getFuncSignature(expr.selector)
+    const func = parent.findRef(signature)
+    let node: FuncCallExprNode | DynamicFuncCallExprNode
+    if (func instanceof FuncNode) {
+      node = new FuncCallExprNode()
+      node.setFunc(func)
+    } else {
+      node = new DynamicFuncCallExprNode()
+      node.funcName = signature
+    }
+    link(node)
     if (expr.caller) {
       buildExpr(expr.caller, node, caller => node.setCaller(caller))
     }
   } else if (expr instanceof HzNaryFuncCallExpr) {
-    const node = new FuncCallExprNode()
-    linker(node)
-    const func = parent.findRef(getFuncSignature(expr.selectors))
-    if (!(func instanceof FuncNode)) throw new SemanticAnalyzeError(`${getNaryFuncRepr(expr.selectors)} not declared`, node)
-    node.setFunc(func)
+    const signature = getFuncSignature(expr.selectors)
+    let node: FuncCallExprNode | DynamicFuncCallExprNode
+    const func = parent.findRef(signature)
+    if (func instanceof FuncNode) {
+      node = new FuncCallExprNode()
+      node.setFunc(func)
+    } else {
+      node = new DynamicFuncCallExprNode()
+      node.funcName = signature
+    }
+    link(node)
     if (expr.caller) {
       buildExpr(expr.caller, node, caller => node.setCaller(caller))
     }
@@ -218,6 +228,7 @@ function buildExpr(expr: HzExpr, parent: ASTNode, linker: NodeLinker<ExprNode>):
     }
   } else if (expr instanceof HzBinaryExpr) {
     const node = new BinaryExprNode(expr.op)
+    link(node)
     buildBinaryExpr(node, expr)
   }
 }

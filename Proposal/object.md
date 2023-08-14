@@ -67,30 +67,28 @@
 ```
 
 ```js
-const 账户 = {
+class 账户 {
   // class method
-  init$新建(){
-    const self = {}
-    self.$class = this
+  static init$新建(){
+    const self = new 账户()
     self.余额 = 0
     return self
   }
   // class method
   init$继承自(另一账户){
-    const self = {}
-    self.$class = this
+    const self = new 账户()
     self.余额 = 另一账户.余额
     return self
   }
   // object method
-  存入(self, 金额){
-    self.余额 += 金额
-    return self
+  存入(金额){
+    this.余额 += 金额
+    return this
   }
   // object method
-  取出(self, 金额){
-    self.余额 -= 金额
-    return self
+  取出(金额){
+    this.余额 -= 金额
+    return this
   }
 }
 ```

@@ -12,13 +12,15 @@
   "author": "Liplum",
   "license": "ISC",
   "devDependencies": {
+    "@types/node": "^20.4.9",
+    "@types/source-map-support": "^0.5.6",
     "@typescript-eslint/eslint-plugin": "^6.2.1",
     "@typescript-eslint/parser": "^6.2.1",
-    "@types/node": "^20.4.9",
     "ava": "^5.3.1",
     "eslint": "^8.46.0",
     "typescript": "^5.1.6"
   },
   "dependencies": {
+    "source-map-support": "^0.5.21"
   }
 }

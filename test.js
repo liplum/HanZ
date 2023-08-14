@@ -56,8 +56,8 @@ test("[parse] simple expr", t => {
   const source = "5.14 + 16 * 3。"
   const tokens = lex(source)
   t.is(tokens.length, 7)
-  const file = parse(tokens)
-  t.is(file.topLevels.length, 1)
+  const topLevels = parse(tokens)
+  t.is(topLevels.length, 1)
 })
 
 test("[parse] object + method + field + method chaining + init + ctor", t => {
@@ -89,11 +89,14 @@ test("[parse] object + method + field + method chaining + init + ctor", t => {
 // test messaging
 账户甲 存入: 799。
 账户甲 取出: 199。
+
+// test method chaining
+账户甲 存入: 799, 取出: 199。
   `
   const tokens = lex(source)
   t.is(tokens.length, 77)
-  const file = parse(tokens)
-  t.is(file.topLevels.length, 5)
+  const topLevels = parse(tokens)
+  t.is(topLevels.length, 5)
 })
 
 test("[x] assign to rvalue", t => {

@@ -23,7 +23,7 @@ export class HzCodeBlock {
     return this.statements
   }
   [Symbol.iterator](): Iterator<HzStatmt> {
-    return this.statements.entries()
+    return this.statements.values()
   }
 }
 
