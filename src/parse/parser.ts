@@ -124,7 +124,6 @@ export function parse(tokens: Token[]): HzFileDef {
     } else {
       getStatmt(parseExprStatmt())
     }
-    throw new ParseError("Unrecognized Statement", t)
   }
 
   function parseReturnStatmt(): HzReturnStatmt {

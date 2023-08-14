@@ -1,8 +1,9 @@
-import { semanticAnalyze } from "./ast/analysis.js"
+import { SemanticAnalyzeError, semanticAnalyze } from "./ast/analysis.js"
+import { ASTNodeDefinedError } from "./ast/node.js"
 import { lex } from "./lex/lexer.js"
 import { ParseError, parse } from "./parse/parser.js"
 const source =
-    `
+  `
 对象 账户【
   | 余额 |
   账户 新建【
@@ -35,14 +36,18 @@ const source =
   `
 const tokens = lex(source)
 try {
-  const topLevels = parse(tokens)
-  semanticAnalyze(topLevels)
-  console.log(JSON.stringify(topLevels,null,1))
+  const file = parse(tokens)
+  semanticAnalyze(file)
+  console.log(JSON.stringify(file.topLevels, null, 1))
 } catch (e) {
   if (e instanceof ParseError) {
     const token = e.token
     console.error(JSON.stringify(token), e)
     console.log(nearby(source, token.pos))
+  } else if (e instanceof ASTNodeDefinedError) {
+    console.error(e)
+  } else if (e instanceof SemanticAnalyzeError) {
+    console.log(e)
   }
 }
 

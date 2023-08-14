@@ -1,174 +1,165 @@
 import { Writable } from "stream"
-import { TopLevel } from "../parse/file.js"
-import { HzFuncDecl, HzNaryFuncDecl, HzNullaryFuncDecl, HzObjDecl, HzVarDecl, NaryFuncSelectorDecl } from "../parse/declaration.js"
-import { HzBreakStatmt, HzCodeBlock, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzVarDeclStatmt, HzWhileStatmt, StatmtType } from "../parse/statement.js"
-import { HzBinaryExpr, HzExpr, HzLiteralExpr, HzNaryFuncCallExpr, HzNullaryFuncCallExpr, HzVarExpr } from "../parse/expr.js"
-import { HzNaryFunc, HzNullaryFunc } from "../scope.js"
+import { BinaryExprNode, BlockNode, BreakStatementNode, ContinueStatementNode, ExprNode, ExprStatementNode, FieldNode, FileNode, FuncCallExprNode, FuncNode, IfStatementNode, InitStatementNode, LiteralExprNode, LocalVarNode, ObjMethodNode, ObjNode, RefExprNode, ReturnStatementNode, StatementNode, WhileStatementNode } from "../ast/node.js"
 
-export function transpile2Js(topLevels: TopLevel[], output: Writable) {
-  for (const topLevel of topLevels) {
-    if (topLevel instanceof HzObjDecl) {
-      genObjDecl(topLevel)
-    } else if (topLevel instanceof HzFuncDecl) {
-      genFuncDecl(topLevel)
-    } else if (topLevel instanceof HzExprStatmt) {
-      genExprStatmt(topLevel)
-    } else if (topLevel instanceof HzInitStatmt) {
-      genInitStatmt(topLevel)
+export function transpile2Js(fileNode: FileNode, output: Writable) {
+  for (const symbol of fileNode.locals) {
+    if (symbol instanceof ObjNode) {
+      genObj(symbol)
+    } else if (symbol instanceof FuncNode) {
+      genFuncDecl(symbol)
     }
   }
+  for (const statmt of fileNode.statements) {
+    genStatmt(statmt)
+  }
 
-  function genObjDecl(obj: HzObjDecl): void {
+  function genObj(obj: ObjNode): void {
     output.write(`const obj$${obj.name}={`)
-    for (const ctor of obj.ctors) {
-      output.write(`init$${ctor.signature}`)
+    for (const method of obj.objMethods.values()) {
+      genObjMethod(method)
+    }
+    for (const ctor of obj.ctors.values()) {
+      output.write(`init$${ctor.name}`)
       genFuncParam(ctor)
       genCtorCodeBlock(ctor.body)
-    }
-
-    for (const method of obj.objMethods) {
-      genMethod(method)
     }
     output.write("}")
   }
 
-  function genMethod(method: HzFuncDecl): void {
-    output.write(`${method.signature}`)
+  function genObjMethod(method: ObjMethodNode): void {
+    output.write(`${method.name}`)
     genMethodParam(method)
-    genCodeBlock(method.body)
+    genBlock(method.body)
   }
 
-  function genFuncDecl(func: HzFuncDecl): void {
-    output.write(`function ${func.signature}`)
+  function genFuncDecl(func: FuncNode): void {
+    output.write(`function ${func.name}`)
     genFuncParam(func)
-    genCodeBlock(func.body)
+    genBlock(func.body)
   }
 
-  function genMethodParam(func: HzFuncDecl): void {
-    if (func instanceof HzNullaryFuncDecl) {
-      output.write("(self)")
-    } else if (func instanceof HzNaryFuncDecl) {
-      output.write("(self,")
-      output.write(func.selectors.map(({ selector, param }) => {
-        return param ? param : selector
-      }).join(","))
-      output.write(")")
-    }
+  function genMethodParam(func: FuncNode): void {
+    const params = Array.from(func.params.values()).map(p => p.name)
+    params.unshift("self")
+    output.write("(")
+    output.write(params.join(","))
+    output.write(")")
   }
 
-  function genFuncParam(func: HzFuncDecl): void {
-    if (func instanceof HzNullaryFuncDecl) {
-      output.write("()")
-    } else if (func instanceof HzNaryFuncDecl) {
-      output.write("(")
-      output.write(func.selectors.map(({ selector, param }) => {
-        return param ? param : selector
-      }).join(","))
-      output.write(")")
-    }
+  function genFuncParam(func: FuncNode): void {
+    const params = Array.from(func.params.values()).map(p => p.name)
+    output.write("(")
+    output.write(params.join(","))
+    output.write(")")
   }
 
-  function genCtorCodeBlock(block: HzCodeBlock): void {
+  function genCtorCodeBlock(block: BlockNode): void {
     output.write("{")
     output.write("const self={};self.$class=this;")
-    for (const statmt of block) {
+    for (const statmt of block.statements) {
       genStatmt(statmt)
     }
     output.write("return self;")
     output.write("}")
   }
 
-  function genCodeBlock(block: HzCodeBlock): void {
+  function genBlock(block: BlockNode): void {
     output.write("{")
-    for (const statmt of block) {
+    for (const local of block.locals.values()) {
+      if (local.constant) {
+        output.write(`const ${local.name};`)
+      } else {
+        output.write(`let ${local.name};`)
+      }
+    }
+    for (const statmt of block.statements) {
       genStatmt(statmt)
     }
     output.write("}")
   }
 
-  function genStatmt(statmt: HzStatmt): void {
-    if (statmt instanceof HzIfStatmt) {
+  function genStatmt(statmt: StatementNode): void {
+    if (statmt instanceof IfStatementNode) {
       genIfStatmt(statmt)
-    } else if (statmt instanceof HzWhileStatmt) {
+    } else if (statmt instanceof WhileStatementNode) {
       genWhileStatmt(statmt)
-    } else if (statmt instanceof HzInitStatmt) {
+    } else if (statmt instanceof InitStatementNode) {
       genInitStatmt(statmt)
-    } else if (statmt instanceof HzExprStatmt) {
+    } else if (statmt instanceof ExprStatementNode) {
       genExprStatmt(statmt)
-    } else if (statmt instanceof HzReturnStatmt) {
+    } else if (statmt instanceof ReturnStatementNode) {
       genReturnStatmt(statmt)
-    } else if (statmt instanceof HzVarDeclStatmt) {
-      genVarDeclStatmt(statmt)
-    } else if (statmt instanceof HzBreakStatmt) {
+    } else if (statmt instanceof BreakStatementNode) {
       genBreakStatmt(statmt)
-    } else if (statmt instanceof HzContinueStatmt) {
+    } else if (statmt instanceof ContinueStatementNode) {
       genContinueStatmt(statmt)
     }
   }
 
-  function genIfStatmt(statmt: HzIfStatmt): void {
-    output.write(`if(${genExpr(statmt.condition)})`)
-    genCodeBlock(statmt.consequent)
+  function genIfStatmt(statmt: IfStatementNode): void {
+    output.write("if(")
+    genExpr(statmt.condition)
+    output.write(")")
+    genBlock(statmt.consequent)
     if (statmt.alternate) {
       output.write("else")
-      genCodeBlock(statmt.alternate)
+      genBlock(statmt.alternate)
     }
   }
 
-  function genWhileStatmt(statmt: HzWhileStatmt): void {
-    output.write(`while(${genExpr(statmt.condition)})`)
-    genCodeBlock(statmt.body)
+  function genWhileStatmt(statmt: WhileStatementNode): void {
+    output.write("while(")
+    genExpr(statmt.condition)
+    output.write(")")
+    genBlock(statmt.body)
   }
-  function genExprStatmt(statmt: HzExprStatmt): void {
+  function genExprStatmt(statmt: ExprStatementNode): void {
     genExpr(statmt.expr)
     output.write(";")
   }
-  function genInitStatmt(statmt: HzInitStatmt): void {
-    output.write(`let ${statmt.name}=${statmt.value};`)
-  }
-  function genReturnStatmt(statmt: HzReturnStatmt): void {
-    output.write(`return ${statmt.value};`)
-  }
-  function genVarDeclStatmt(statmt: HzVarDeclStatmt): void {
-    genVarDecl(statmt.declare)
+  function genInitStatmt(statmt: InitStatementNode): void {
+    output.write(`${statmt.lvalue.name}=`)
+    genExpr(statmt.rvalue)
     output.write(";")
   }
-  function genVarDecl(decl: HzVarDecl): void {
-    output.write("let ")
-    output.write(decl.name.join(","))
+  function genReturnStatmt(statmt: ReturnStatementNode): void {
+    output.write("return")
+    genExpr(statmt.value)
+    output.write(";")
   }
-  function genBreakStatmt(statmt: HzBreakStatmt): void {
+  function genBreakStatmt(statmt: BreakStatementNode): void {
     output.write("break;")
   }
-  function genContinueStatmt(statmt: HzContinueStatmt): void {
+  function genContinueStatmt(statmt: ContinueStatementNode): void {
     output.write("continue;")
   }
-  function genExpr(expr: HzExpr): void {
-    if (expr instanceof HzLiteralExpr) {
+  function genExpr(expr: ExprNode): void {
+    if (expr instanceof LiteralExprNode) {
       genLiteralExpr(expr)
-    } else if (expr instanceof HzVarExpr) {
+    } else if (expr instanceof RefExprNode) {
       genVarExpr(expr)
-    } else if (expr instanceof HzNullaryFuncCallExpr) {
-      genNullaryFuncCallExpr(expr)
-    } else if (expr instanceof HzNaryFuncCallExpr) {
-      genNaryFuncCallExpr(expr)
-    } else if (expr instanceof HzBinaryExpr) {
+    } else if (expr instanceof FuncCallExprNode) {
+      genFuncCallExpr(expr)
+    } else if (expr instanceof BinaryExprNode) {
       genBinaryExpr(expr)
     }
   }
-  function genLiteralExpr(expr: HzLiteralExpr) {
-    output.write(expr.value.raw)
+  function genLiteralExpr(expr: LiteralExprNode) {
+    output.write(expr.raw)
   }
-  function genVarExpr(expr: HzVarExpr) {
-    
+  function genVarExpr(expr: RefExprNode) {
+    output.write(expr.ref.name)
   }
-  function genNullaryFuncCallExpr(expr: HzNullaryFuncCallExpr) {
+  function genFuncCallExpr(expr: FuncCallExprNode) {
+    if (expr.caller) {
 
+    }
   }
-  function genNaryFuncCallExpr(expr: HzNaryFuncCallExpr) {
-
-  }
-  function genBinaryExpr(expr: HzBinaryExpr) {
-
+  function genBinaryExpr(expr: BinaryExprNode) {
+    output.write("(")
+    genExpr(expr.left)
+    output.write(expr.op)
+    genExpr(expr.right)
+    output.write(")")
   }
 }

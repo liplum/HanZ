@@ -8,8 +8,8 @@ export class ASTNode {
 }
 
 export class BlockNode extends ASTNode {
-  protected locals: Map<string, RefNode> = new Map()
-  protected statements: StatementNode[] = []
+  locals: Map<string, RefNode> = new Map()
+  statements: StatementNode[] = []
   findRef(name: string): RefNode | undefined {
     return this.locals.get(name) ?? this.parent?.findRef(name)
   }
@@ -22,6 +22,19 @@ export class BlockNode extends ASTNode {
     this.statements.push(statement)
     statement.parent = this
     return true
+  }
+}
+
+export class FileNode extends BlockNode {
+  declare parent: undefined
+  declare locals: Map<string, ObjNode | FuncNode | LocalVarNode>
+  findRef(name: string): ObjNode | FuncNode | LocalVarNode | undefined {
+    return this.locals.get(name)
+  }
+  defineLocal(symbol: ObjNode | FuncNode | LocalVarNode): void {
+    if (this.locals.has(symbol.name))
+      throw new ASTNodeDefinedError("Top-level already defined in file", this, symbol)
+    symbol.parent = this
   }
 }
 
@@ -49,24 +62,46 @@ export class FieldNode extends RefNode {
 }
 
 export class ObjNode extends RefNode {
-  protected members: Map<string, RefNode> = new Map()
+  ctors: Map<string, CtorNode> = new Map()
+  fields: Map<string, FieldNode> = new Map()
+  objMethods: Map<string, ObjMethodNode> = new Map()
+  classMethods: Map<string, ClassMethodNode> = new Map()
   constructor(name: string) {
     super(name)
     this.constant = true
   }
   findRef(name: string): RefNode | undefined {
-    return this.members.get(name) ?? this.parent?.findRef(name)
+    return this.fields.get(name)
+      ?? this.ctors.get(name)
+      ?? this.objMethods.get(name)
+      ?? this.classMethods.get(name)
+      ?? this.parent?.findRef(name)
   }
-  defineMember(member: FieldNode | FuncNode): void {
-    if (this.members.has(member.name))
-      throw new ASTNodeDefinedError("Member already defined in object", this, member)
-    member.parent = this
+  defineCtor(func: CtorNode): void {
+    if (this.ctors.has(func.name))
+      throw new ASTNodeDefinedError("Constructor already defined in object", this, func)
+    func.parent = this
+  }
+  defineField(field: FieldNode): void {
+    if (this.fields.has(field.name))
+      throw new ASTNodeDefinedError("Field already defined in object", this, field)
+    field.parent = this
+  }
+  defineObjMethod(objMethod: ObjMethodNode): void {
+    if (this.fields.has(objMethod.name))
+      throw new ASTNodeDefinedError("Object method already defined in object", this, objMethod)
+    objMethod.parent = this
+  }
+  defineClassMethod(classMethod: ClassMethodNode): void {
+    if (this.fields.has(classMethod.name))
+      throw new ASTNodeDefinedError("Class method already defined in object", this, classMethod)
+    classMethod.parent = this
   }
 }
 
 export class FuncNode extends RefNode {
-  protected params: Map<string, ParamNode> = new Map()
-  protected body: BlockNode
+  params: Map<string, ParamNode> = new Map()
+  body: BlockNode
   constructor(name: string) {
     super(name)
     this.constant = true
@@ -128,9 +163,9 @@ export class RefExprNode extends ExprNode {
 }
 
 export class BinaryExprNode extends ExprNode {
-  protected left: ExprNode
-  protected op: Operator
-  protected right: ExprNode
+  left: ExprNode
+  op: Operator
+  right: ExprNode
   constructor(op: Operator) {
     super()
     this.op = op
@@ -150,9 +185,9 @@ export class BinaryExprNode extends ExprNode {
 }
 
 export class FuncCallExprNode extends ExprNode {
-  protected caller?: ExprNode
-  protected func: FuncNode
-  protected args: ExprNode[] = []
+  caller?: ExprNode
+  func: FuncNode
+  args: ExprNode[] = []
   setCaller(caller: ExprNode) {
     if (this.caller)
       throw new ASTNodeDefinedError("call already defined in func call", this, caller)
@@ -169,7 +204,7 @@ export class FuncCallExprNode extends ExprNode {
   }
 }
 
-export class LiteralNode<T = unknown> extends ExprNode {
+export class LiteralExprNode<T = unknown> extends ExprNode {
   raw: string
   value: T
 }
@@ -178,8 +213,11 @@ export class StatementNode extends ASTNode {
 
 }
 
+export class BreakStatementNode extends StatementNode { }
+export class ContinueStatementNode extends StatementNode { }
+
 export class ExprStatementNode extends StatementNode {
-  protected expr: ExprNode
+  expr: ExprNode
   defineExpr(expr: ExprNode): void {
     if (this.expr)
       throw new ASTNodeDefinedError("Expr already defined in statement", this, expr)
@@ -189,9 +227,9 @@ export class ExprStatementNode extends StatementNode {
 }
 
 export class IfStatementNode extends StatementNode {
-  protected condition: ExprNode
-  protected consequent: BlockNode
-  protected alternate?: BlockNode
+  condition: ExprNode
+  consequent: BlockNode
+  alternate?: BlockNode
   defineCondition(condition: ExprNode): void {
     if (this.condition)
       throw new ASTNodeDefinedError("Condition already defined in if", this, condition)
@@ -213,8 +251,8 @@ export class IfStatementNode extends StatementNode {
 }
 
 export class WhileStatementNode extends StatementNode {
-  protected condition: ExprNode
-  protected body: BlockNode
+  condition: ExprNode
+  body: BlockNode
   defineCondition(condition: ExprNode): void {
     if (this.condition)
       throw new ASTNodeDefinedError("Condition already defined in while", this, condition)
@@ -230,7 +268,7 @@ export class WhileStatementNode extends StatementNode {
 }
 
 export class ReturnStatementNode extends StatementNode {
-  protected value: ExprNode
+  value: ExprNode
   defValue(value: ExprNode): void {
     if (this.value)
       throw new ASTNodeDefinedError("Value already defined in return", this, value)
@@ -240,8 +278,8 @@ export class ReturnStatementNode extends StatementNode {
 }
 
 export class InitStatementNode extends StatementNode {
-  protected lvalue: LocalVarNode
-  protected rvalue: ExprNode
+  lvalue: LocalVarNode
+  rvalue: ExprNode
   setLvalue(lvalue: LocalVarNode): void {
     if (this.lvalue)
       throw new ASTNodeDefinedError("Lvalue already defined in init", this, lvalue)
