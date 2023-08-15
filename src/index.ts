@@ -17,12 +17,10 @@ const source =
   账户 继承自: 另一账户【
     余额 = 另一账户 余额。
   】
-  // to deposit money
   方法 存入: 金额【
     余额 += 金额。
     返回 自己。
   】
-  // to withdraw money
   方法 取出: 金额【
     余额 -= 金额。
     返回 自己。

@@ -26,7 +26,7 @@ export abstract class ASTNode {
 export class BlockNode extends ASTNode {
   locals: Map<string, RefNode> = new Map()
   statements: StatementNode[] = []
-  protected def: HzCodeBlock
+  def: HzCodeBlock
   constructor(def: HzCodeBlock) {
     super()
     this.def = def
@@ -66,7 +66,7 @@ export class BlockNode extends ASTNode {
 export class FileNode extends ASTNode {
   declare parent: undefined
   locals: Map<string, ObjNode | FuncNode | LocalVarNode> = new Map()
-  protected def: HzFileDef
+  def: HzFileDef
   statements: StatementNode[] = []
   constructor(def: HzFileDef) {
     super()
@@ -264,9 +264,14 @@ export class ClassMethodNode extends FuncNode {
 
 export class ObjMethodNode extends FuncNode {
   declare parent: ObjNode
+  findRef(name: string): RefNode | undefined {
+    if (name === "self") return SelfRefNode.instance
+    return super.findRef(name)
+  }
 }
 
 export class SelfRefNode extends LocalVarNode {
+  static readonly instance = new SelfRefNode()
   constructor() {
     super("self")
     this.constant = true
@@ -280,7 +285,7 @@ export abstract class ExprNode extends ASTNode {
 export class RefExprNode extends ExprNode {
   /** unowned */
   ref: RefNode
-  protected def: HzRefExpr
+  def: HzRefExpr
   constructor(def: HzRefExpr) {
     super()
     this.def = def
@@ -401,7 +406,7 @@ export class FuncCallExprNode extends ExprNode {
 }
 
 export class LiteralExprNode extends ExprNode {
-  protected def: HzLiteralExpr
+  def: HzLiteralExpr
   raw: string
   value: unknown
   type: LiteralType
@@ -454,7 +459,7 @@ export abstract class StatementNode extends ASTNode {
 }
 
 export class BreakStatementNode extends StatementNode {
-  protected def: HzBreakStatmt
+  def: HzBreakStatmt
   constructor(def: HzBreakStatmt) {
     super()
     this.def = def
@@ -464,7 +469,7 @@ export class BreakStatementNode extends StatementNode {
   }
 }
 export class ContinueStatementNode extends StatementNode {
-  protected def: HzContinueStatmt
+  def: HzContinueStatmt
   constructor(def: HzContinueStatmt) {
     super()
     this.def = def
@@ -476,7 +481,7 @@ export class ContinueStatementNode extends StatementNode {
 
 export class ExprStatementNode extends StatementNode {
   expr: ExprNode
-  protected def: HzExprStatmt
+  def: HzExprStatmt
   constructor(def: HzExprStatmt) {
     super()
     this.def = def
@@ -502,7 +507,7 @@ export class IfStatementNode extends StatementNode {
   condition: ExprNode
   consequent: BlockNode
   alternate?: BlockNode
-  protected def: HzIfStatmt
+  def: HzIfStatmt
   constructor(def: HzIfStatmt) {
     super()
     this.def = def
@@ -547,7 +552,7 @@ export class IfStatementNode extends StatementNode {
 export class WhileStatementNode extends StatementNode {
   condition: ExprNode
   body: BlockNode
-  protected def: HzWhileStatmt
+  def: HzWhileStatmt
   constructor(def: HzWhileStatmt) {
     super()
     this.def = def
@@ -605,7 +610,7 @@ export class InitStatementNode extends StatementNode {
   /** unowned */
   lvalue: LocalVarNode
   rvalue: ExprNode
-  protected def: HzInitStatmt
+  def: HzInitStatmt
   constructor(def: HzInitStatmt) {
     super()
     this.def = def
@@ -623,6 +628,13 @@ export class InitStatementNode extends StatementNode {
     yield this.rvalue
   }
   build(): void {
+    const initVar = new LocalVarNode(this.def.name)
+    for (let cur = this.parent; cur !== undefined; cur = cur.parent) {
+      if (cur instanceof BlockNode || cur instanceof FileNode) {
+        cur.defineLocal(initVar)
+        break
+      }
+    }
     this.defRvalue(makeExprNode(this.def.value))
   }
   link(): void {
