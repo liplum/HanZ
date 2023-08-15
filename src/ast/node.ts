@@ -1,9 +1,9 @@
-import { Operator, SoftKeyword } from "../lex/token"
-import { HzObjDecl, HzFuncDecl, HzVarDecl, HzNaryFuncDecl, getFuncSignature } from "../parse/declaration"
-import { HzFileDef } from "../parse/file"
-import { HzBreakStatmt, HzCodeBlock, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzWhileStatmt } from "../parse/statement"
-import { HzBinaryExpr, HzExpr, HzFuncCallExpr, HzLiteralExpr, HzNaryFuncCallExpr, HzNullaryFuncCallExpr, HzRefExpr } from "../parse/expr"
-import { LiteralType } from "../parse/literal"
+import { Operator, SoftKeyword } from "../lex/token.js"
+import { HzObjDecl, HzFuncDecl, HzVarDecl, HzNaryFuncDecl, getFuncSignature } from "../parse/declaration.js"
+import { HzFileDef } from "../parse/file.js"
+import { HzBreakStatmt, HzCodeBlock, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzWhileStatmt } from "../parse/statement.js"
+import { HzBinaryExpr, HzExpr, HzFuncCallExpr, HzLiteralExpr, HzNaryFuncCallExpr, HzNullaryFuncCallExpr, HzRefExpr } from "../parse/expr.js"
+import { LiteralType } from "../parse/literal.js"
 
 export type ASTNodeClass<T = unknown> = { new(...args: unknown[]): T }
 export abstract class ASTNode {
@@ -64,7 +64,7 @@ export class BlockNode extends ASTNode {
 
 export class FileNode extends ASTNode {
   declare parent: undefined
-  locals: Map<string, ObjNode | FuncNode | LocalVarNode>
+  locals: Map<string, ObjNode | FuncNode | LocalVarNode> = new Map()
   protected def: HzFileDef
   statements: StatementNode[] = []
   constructor(def: HzFileDef) {
@@ -116,15 +116,15 @@ export class FileNode extends ASTNode {
 export abstract class RefNode extends ASTNode {
   name: string
   constant: boolean = false
-  constructor() {
+  constructor(name: string) {
     super()
+    this.name = name
   }
 }
 
 export class LocalVarNode extends RefNode {
   constructor(name: string) {
-    super()
-    this.name = name
+    super(name)
   }
   get isLeaf(): boolean {
     return true
@@ -138,8 +138,7 @@ export class ParamNode extends LocalVarNode {
 export class FieldNode extends RefNode {
   declare parent: ObjNode
   constructor(name: string) {
-    super()
-    this.name = name
+    super(name)
   }
   get isLeaf(): boolean {
     return true
@@ -153,7 +152,7 @@ export class ObjNode extends RefNode {
   classMethods: Map<string, ClassMethodNode> = new Map()
   def: HzObjDecl
   constructor(def: HzObjDecl) {
-    super()
+    super(def.name)
     this.constant = true
     this.def = def
   }
@@ -218,7 +217,7 @@ export class FuncNode extends RefNode {
   body: BlockNode
   def: HzFuncDecl
   constructor(def: HzFuncDecl) {
-    super()
+    super(def.signature)
     this.def = def
     this.constant = true
   }
@@ -615,7 +614,7 @@ export class InitStatementNode extends StatementNode {
     const lvalueName = this.def.name
     const lvalue = this.parent?.findRef(lvalueName)
     if (lvalue === undefined)
-      throw new SemanticAnalysisError(`${lvalue} not declared`, this.def)
+      throw new SemanticAnalysisError(`${lvalueName} not declared`, this.def)
     this.lvalue = lvalue
     this.defRvalue(makeExprNode(this.def.value))
   }
