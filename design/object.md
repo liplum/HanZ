@@ -7,14 +7,17 @@
 3. Fields are declared in the object-level, and can be initialized in the constructors.
 
 ```
-对象 账户
+对象 账户【
   | 余额 |
   
-  账户 新建
+  账户 新建【
     余额 = 0
+  】
   
-  账户 继承自: 另一账户
-    余额 = 另一账户的余额
+  账户 继承自: 另一账户【
+    余额 = 另一账户 余额
+  】
+】
 ```
 
 ## Instantiation
@@ -64,33 +67,6 @@
     返回 自己。
   】
 】
-```
-
-```js
-class 账户 {
-  // class method
-  static init$新建(){
-    const self = new 账户()
-    self.余额 = 0
-    return self
-  }
-  // class method
-  init$继承自(另一账户){
-    const self = new 账户()
-    self.余额 = 另一账户.余额
-    return self
-  }
-  // object method
-  存入(金额){
-    this.余额 += 金额
-    return this
-  }
-  // object method
-  取出(金额){
-    this.余额 -= 金额
-    return this
-  }
-}
 ```
 
 ## Method Calling
