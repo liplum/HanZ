@@ -3,6 +3,9 @@ import test from "ava"
 import { lex } from "./dist/lex/lexer.js"
 import { parse } from "./dist/parse/parser.js"
 import { TokenType } from "./dist/lex/token.js"
+import { semanticAnalyze } from "./dist/ast/analysis.js"
+import { transpile2Js } from "./dist/visitor/2js.js"
+import { Writable } from "stream"
 test("[lex] simple expr", t => {
   const source = "5.14+16*3"
   const tokens = lex(source)
@@ -60,7 +63,7 @@ test("[parse] simple expr", t => {
   t.is(file.topLevels.length, 1)
 })
 
-test("[parse] object + method + field + method chaining + init + ctor", t => {
+test("[2js] object + method + field + method chaining + init + ctor", t => {
   const source =
     `
 对象 账户【
@@ -95,8 +98,10 @@ test("[parse] object + method + field + method chaining + init + ctor", t => {
   `
   const tokens = lex(source)
   t.is(tokens.length, 77)
-  const file = parse(tokens)
-  t.is(file.topLevels.length, 5)
+  const fileDef = parse(tokens)
+  t.is(fileDef.topLevels.length, 5)
+  const fileNode = semanticAnalyze(fileDef)
+  transpile2Js(fileNode, new Writable({ write() { } }))
 })
 
 test("[x] assign to rvalue", t => {
