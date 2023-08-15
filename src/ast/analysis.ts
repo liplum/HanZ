@@ -187,7 +187,7 @@ function buildInitStatmt(node: InitStatementNode, init: HzInitStatmt): void {
       break
     }
   }
-  node.setLvalue(initVar)
+  node.lvalue = initVar
   buildExpr(init.value, node, sub => node.defRvalue(sub))
 }
 

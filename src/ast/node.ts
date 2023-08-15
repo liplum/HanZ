@@ -1,8 +1,9 @@
 import { Operator } from "../lex/token"
 
 export type ASTNodeClass<T = unknown> = { new(...args: unknown[]): T }
-export class ASTNode {
+export abstract class ASTNode {
   parent?: ASTNode
+  abstract get isLeaf(): boolean
   findRef(name: string): RefNode | undefined {
     return this.parent?.findRef(name)
   }
@@ -31,6 +32,9 @@ export class BlockNode extends ASTNode {
     statement.parent = this
     return true
   }
+  get isLeaf(): boolean {
+    return false
+  }
 }
 
 export class FileNode extends BlockNode {
@@ -45,9 +49,12 @@ export class FileNode extends BlockNode {
     symbol.parent = this
     this.locals.set(symbol.name, symbol)
   }
+  get isLeaf(): boolean {
+    return false
+  }
 }
 
-export class RefNode extends ASTNode {
+export abstract class RefNode extends ASTNode {
   name: string
   constant: boolean = false
   constructor(name: string) {
@@ -57,6 +64,9 @@ export class RefNode extends ASTNode {
 }
 
 export class LocalVarNode extends RefNode {
+  get isLeaf(): boolean {
+    return true
+  }
 }
 
 export class ParamNode extends LocalVarNode {
@@ -67,6 +77,9 @@ export class FieldNode extends RefNode {
   declare parent: ObjNode
   constructor(name: string) {
     super(name)
+  }
+  get isLeaf(): boolean {
+    return true
   }
 }
 
@@ -110,6 +123,9 @@ export class ObjNode extends RefNode {
     classMethod.parent = this
     this.classMethods.set(classMethod.name, classMethod)
   }
+  get isLeaf(): boolean {
+    return false
+  }
 }
 
 export class FuncNode extends RefNode {
@@ -133,6 +149,9 @@ export class FuncNode extends RefNode {
   }
   findRef(name: string): RefNode | undefined {
     return this.params.get(name) ?? this.parent?.findRef(name)
+  }
+  get isLeaf(): boolean {
+    return false
   }
 }
 
@@ -172,12 +191,16 @@ export abstract class ExprNode extends ASTNode {
 }
 
 export class RefExprNode extends ExprNode {
+  /** unowned */
   ref: RefNode
   constructor(ref: RefNode) {
     super()
     this.ref = ref
   }
   get isSingle(): boolean {
+    return true
+  }
+  get isLeaf(): boolean {
     return true
   }
 }
@@ -205,10 +228,14 @@ export class BinaryExprNode extends ExprNode {
     this.right = right
     right.parent = this
   }
+  get isLeaf(): boolean {
+    return false
+  }
 }
 
 export class FuncCallExprNode extends ExprNode {
   caller?: ExprNode
+  /** unowned */
   func: FuncNode
   args: ExprNode[] = []
   get isSingle(): boolean {
@@ -229,6 +256,9 @@ export class FuncCallExprNode extends ExprNode {
     this.args.push(arg)
     arg.parent = this
   }
+  get isLeaf(): boolean {
+    return false
+  }
 }
 
 export class DynamicFuncCallExprNode extends ExprNode {
@@ -248,6 +278,9 @@ export class DynamicFuncCallExprNode extends ExprNode {
     this.args.push(arg)
     arg.parent = this
   }
+  get isLeaf(): boolean {
+    return false
+  }
 }
 
 export class LiteralExprNode<T = unknown> extends ExprNode {
@@ -256,14 +289,25 @@ export class LiteralExprNode<T = unknown> extends ExprNode {
   get isSingle(): boolean {
     return true
   }
+  get isLeaf(): boolean {
+    return true
+  }
 }
 
-export class StatementNode extends ASTNode {
+export abstract class StatementNode extends ASTNode {
 
 }
 
-export class BreakStatementNode extends StatementNode { }
-export class ContinueStatementNode extends StatementNode { }
+export class BreakStatementNode extends StatementNode {
+  get isLeaf(): boolean {
+    return true
+  }
+}
+export class ContinueStatementNode extends StatementNode {
+  get isLeaf(): boolean {
+    return true
+  }
+}
 
 export class ExprStatementNode extends StatementNode {
   expr: ExprNode
@@ -272,6 +316,9 @@ export class ExprStatementNode extends StatementNode {
       throw new ASTNodeDefinedError("Expr already defined in statement", this, expr)
     this.expr = expr
     expr.parent = this
+  }
+  get isLeaf(): boolean {
+    return false
   }
 }
 
@@ -297,6 +344,9 @@ export class IfStatementNode extends StatementNode {
     this.alternate = alternate
     alternate.parent = this
   }
+  get isLeaf(): boolean {
+    return false
+  }
 }
 
 export class WhileStatementNode extends StatementNode {
@@ -314,6 +364,9 @@ export class WhileStatementNode extends StatementNode {
     this.body = body
     body.parent = this
   }
+  get isLeaf(): boolean {
+    return false
+  }
 }
 
 export class ReturnStatementNode extends StatementNode {
@@ -324,21 +377,23 @@ export class ReturnStatementNode extends StatementNode {
     this.value = value
     value.parent = this
   }
+  get isLeaf(): boolean {
+    return false
+  }
 }
 
 export class InitStatementNode extends StatementNode {
+  /** unowned */
   lvalue: LocalVarNode
   rvalue: ExprNode
-  setLvalue(lvalue: LocalVarNode): void {
-    if (this.lvalue)
-      throw new ASTNodeDefinedError("Lvalue already defined in init", this, lvalue)
-    this.lvalue = lvalue
-  }
   defRvalue(rvalue: ExprNode): void {
     if (this.rvalue)
       throw new ASTNodeDefinedError("Rvalue already defined in init", this, rvalue)
     this.rvalue = rvalue
     rvalue.parent = this
+  }
+  get isLeaf(): boolean {
+    return false
   }
 }
 
