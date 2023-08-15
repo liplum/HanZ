@@ -1,7 +1,7 @@
 import { HzFuncDecl, HzNaryFuncDecl, HzNullaryFuncDecl, HzObjDecl, HzVarDecl, NaryFuncSelectorDecl } from "./declaration.js"
-import { HzFuncCallExpr, HzNaryCallSelector, HzExpr, HzBinaryExpr, HzLiteralExpr, HzVarExpr, HzNullaryFuncCallExpr, HzNaryFuncCallExpr } from "./expr.js"
+import { HzFuncCallExpr, HzNaryCallSelector, HzExpr, HzBinaryExpr, HzLiteralExpr, HzRefExpr, HzNullaryFuncCallExpr, HzNaryFuncCallExpr } from "./expr.js"
 import { HzFileDef, TopLevel } from "./file.js"
-import { HzBoolLiteral, HzNullLiteral, HzNumberLiteral, HzStringLiteral, HzUndefinedLiteral } from "./literal.js"
+import { HzLiteral, LiteralType } from "./literal.js"
 import { HzBreakStatmt, HzCodeBlock, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzWhileStatmt } from "./statement.js"
 import { Keyword, Operator as Op, SoftKeyword, Token, TokenType, isAssign } from "../lex/token.js"
 
@@ -362,28 +362,28 @@ export function parse(tokens: Token[]): HzFileDef {
     const t = peek()
     if (t.type === TokenType.number) {
       advance()
-      return new HzLiteralExpr(new HzNumberLiteral(t.lexeme))
+      return new HzLiteralExpr(new HzLiteral(LiteralType.number, t.lexeme))
     } else if (t.type === TokenType.string) {
       advance()
-      return new HzLiteralExpr(new HzStringLiteral(t.lexeme))
+      return new HzLiteralExpr(new HzLiteral(LiteralType.string, t.lexeme))
     } else if (t.type === TokenType.identifier) {
       const nextToken = peekNext()
       if (nextToken?.type === TokenType.identifier) {
         advance()
         // function call
-        return parseFuncCallExpr(new HzVarExpr({ name: t.lexeme }))
+        return parseFuncCallExpr(new HzRefExpr({ name: t.lexeme }))
       } else if (nextToken?.type === TokenType.colon) {
         // independent function call
         return parseFuncCallExpr()
       } else if (t.lexeme === SoftKeyword.true || t.lexeme === SoftKeyword.false) {
-        return new HzLiteralExpr(new HzBoolLiteral(t.lexeme))
+        return new HzLiteralExpr(new HzLiteral(LiteralType.bool, t.lexeme))
       } else if (t.lexeme === SoftKeyword.null) {
-        return new HzLiteralExpr(new HzNullLiteral())
+        return new HzLiteralExpr(new HzLiteral(LiteralType.null, t.lexeme))
       } else if (t.lexeme === SoftKeyword.undefined) {
-        return new HzLiteralExpr(new HzUndefinedLiteral())
+        return new HzLiteralExpr(new HzLiteral(LiteralType.undefined, t.lexeme))
       } else {
         advance()
-        return new HzVarExpr({ name: t.lexeme })
+        return new HzRefExpr({ name: t.lexeme })
       }
     } else if (t.type === TokenType.lParen) {
       // consume "("
@@ -443,10 +443,6 @@ export function parse(tokens: Token[]): HzFileDef {
 
   function peekNext(): Token | undefined {
     return tokens[pos + 1]
-  }
-
-  function peekNextNext(): Token | undefined {
-    return tokens[pos + 2]
   }
 
   // overloading
