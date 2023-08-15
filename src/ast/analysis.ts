@@ -1,6 +1,10 @@
 import { HzFileDef } from "../parse/file.js"
 import { ASTNode, FileNode } from "./node.js"
-
+/**
+ * The semantic analysis consists of two phrases:
+ * 1. Building: constructing the Abstract Syntax Tree (AST).
+ * 2. Linking: Associating symbols and linking them to nodes.
+ */
 export function semanticAnalyze(fileDef: HzFileDef): FileNode {
   const fileNode = new FileNode(fileDef)
   buildNode(fileNode)
