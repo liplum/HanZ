@@ -16,7 +16,7 @@ export class HzExpr {
   }
 }
 
-export class HzVarExpr extends HzExpr {
+export class HzRefExpr extends HzExpr {
   name: string
   constructor({ name }: { name: string }) {
     super()
@@ -70,9 +70,9 @@ export class HzUnaryExpr extends HzExpr {
   }
 }
 
-export class HzLiteralExpr<T = string> extends HzExpr {
-  value: HzLiteral<T>
-  constructor(value: HzLiteral<T>) {
+export class HzLiteralExpr extends HzExpr {
+  value: HzLiteral
+  constructor(value: HzLiteral) {
     super()
     this.value = value
   }

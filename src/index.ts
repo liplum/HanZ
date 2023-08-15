@@ -1,6 +1,6 @@
 import { Writable } from "stream"
-import { SemanticAnalyzeError, semanticAnalyze } from "./ast/analysis.js"
-import { ASTNodeDefinedError } from "./ast/node.js"
+import { semanticAnalyze } from "./ast/analysis.js"
+import { ASTNodeDefinedError, SemanticAnalysisError } from "./ast/node.js"
 import { lex } from "./lex/lexer.js"
 import { ParseError, parse } from "./parse/parser.js"
 import { transpile2Js } from "./visitor/2js.js"
@@ -17,12 +17,10 @@ const source =
   账户 继承自: 另一账户【
     余额 = 另一账户 余额。
   】
-  // to deposit money
   方法 存入: 金额【
     余额 += 金额。
     返回 自己。
   】
-  // to withdraw money
   方法 取出: 金额【
     余额 -= 金额。
     返回 自己。
@@ -64,7 +62,7 @@ try {
     console.log(nearby(source, token.pos))
   } else if (e instanceof ASTNodeDefinedError) {
     //
-  } else if (e instanceof SemanticAnalyzeError) {
+  } else if (e instanceof SemanticAnalysisError) {
     //
   }
   console.error(e, full)
