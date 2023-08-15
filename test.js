@@ -63,7 +63,7 @@ test("[parse] simple expr", t => {
   t.is(file.topLevels.length, 1)
 })
 
-test("[2js] object + method + field + method chaining + init + ctor", t => {
+test("[2js] object + func call + new", t => {
   const source =
     `
 对象 账户【
@@ -95,11 +95,22 @@ test("[2js] object + method + field + method chaining + init + ctor", t => {
 
 // test method chaining
 账户甲 存入: 799, 取出: 199。
-  `
+
+账户乙 := 账户 继承自: 账户甲。
+账户乙 存入: 299, 取出: 199。
+
+函数 交换财产: 甲 与: 乙【
+  子 := 甲 余额。
+  甲 设置余额: 乙 余额。
+  乙 设置余额: 子。
+】
+
+交换财产: (账户甲) 与: 账户乙。
+`
   const tokens = lex(source)
-  t.is(tokens.length, 77)
+  t.is(tokens.length, 127)
   const fileDef = parse(tokens)
-  t.is(fileDef.topLevels.length, 5)
+  t.is(fileDef.topLevels.length, 9)
   const fileNode = semanticAnalyze(fileDef)
   transpile2Js(fileNode, new Writable({ write() { } }))
 })

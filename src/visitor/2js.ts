@@ -1,5 +1,5 @@
 import { Writable } from "stream"
-import { BinaryExprNode, BlockNode, BreakStatementNode, ContinueStatementNode, CtorNode, DynamicFuncCallExprNode, ExprNode, ExprStatementNode, FieldNode, FileNode, FuncCallExprNode, FuncNode, IfStatementNode, InitStatementNode, LiteralExprNode, LocalVarNode, ObjMethodNode, ObjNode, RefExprNode, ReturnStatementNode, SelfRefNode, StatementNode, WhileStatementNode } from "../ast/node.js"
+import { BinaryExprNode, BlockNode, BreakStatementNode, ContinueStatementNode, CtorNode, ExprNode, ExprStatementNode, FieldNode, FileNode, FuncCallExprNode, FuncNode, IfStatementNode, InitStatementNode, LiteralExprNode, LocalVarNode, ObjMethodNode, ObjNode, RefExprNode, ReturnStatementNode, SelfRefNode, StatementNode, WhileStatementNode } from "../ast/node.js"
 
 export function transpile2Js(fileNode: FileNode, output: Writable) {
   for (const symbol of fileNode.locals.values()) {
@@ -140,8 +140,6 @@ export function transpile2Js(fileNode: FileNode, output: Writable) {
       genRefExpr(expr)
     } else if (expr instanceof FuncCallExprNode) {
       genFuncCallExpr(expr)
-    } else if (expr instanceof DynamicFuncCallExprNode) {
-      genDynamicFuncCallExpr(expr)
     } else if (expr instanceof BinaryExprNode) {
       genBinaryExpr(expr)
     }
@@ -176,7 +174,7 @@ export function transpile2Js(fileNode: FileNode, output: Writable) {
       if (!expr.caller.isSingle) output.write(")")
       output.write(".")
     }
-    output.write(expr.func.name)
+    output.write(expr.func instanceof FuncNode ? expr.func.name : expr.func)
     output.write("(")
     for (let i = 0; i < expr.args.length; i++) {
       const arg = expr.args[i]
@@ -187,24 +185,7 @@ export function transpile2Js(fileNode: FileNode, output: Writable) {
     }
     output.write(")")
   }
-  function genDynamicFuncCallExpr(expr: DynamicFuncCallExprNode) {
-    if (expr.caller) {
-      if (!expr.caller.isSingle) output.write("(")
-      genExpr(expr.caller)
-      if (!expr.caller.isSingle) output.write(")")
-      output.write(".")
-    }
-    output.write(expr.funcName)
-    output.write("(")
-    for (let i = 0; i < expr.args.length; i++) {
-      const arg = expr.args[i]
-      genExpr(arg)
-      if (i < expr.args.length - 1) {
-        output.write(",")
-      }
-    }
-    output.write(")")
-  }
+
   function genBinaryExpr(expr: BinaryExprNode) {
     const isOuter = !(expr.parent instanceof ExprNode)
     if (!isOuter) output.write("(")
