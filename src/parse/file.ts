@@ -1,7 +1,7 @@
-import { HzObjDecl, HzFuncDecl } from "./declaration.js"
+import { HzObjDecl, HzFuncDecl, HzVarDecl } from "./declaration.js"
 import { HzExprStatmt, HzInitStatmt } from "./statement.js"
 
-export type TopLevel = HzObjDecl | HzFuncDecl | HzExprStatmt | HzInitStatmt
+export type TopLevel = HzObjDecl | HzFuncDecl | HzExprStatmt | HzInitStatmt | HzVarDecl[]
 
 export class HzFileDef {
   topLevels: TopLevel[]

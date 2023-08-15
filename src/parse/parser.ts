@@ -49,6 +49,8 @@ export function parse(tokens: Token[]): HzFileDef {
       throw new ParseError(`Unexpected Keyword '${t.keyword}'`, t)
     } else if (t.type === TokenType.identifier && peekNext()?.type === TokenType.init) {
       return parseInitStatmt()
+    } else if (t.type === TokenType.vBar) {
+      return parseVarDecl()
     } else {
       return parseExprStatmt()
     }
@@ -383,6 +385,15 @@ export function parse(tokens: Token[]): HzFileDef {
         advance()
         return new HzVarExpr({ name: t.lexeme })
       }
+    } else if (t.type === TokenType.lParen) {
+      // consume "("
+      advance()
+      const expr = parseExpr()
+      // consume ")"
+      if (!tryConsume(TokenType.rParen)) {
+        throw new ParseError("Unclosed parentheses", peek())
+      }
+      return expr
     }
     throw new ParseError("Unrecognized primary token", t)
   }
@@ -432,6 +443,10 @@ export function parse(tokens: Token[]): HzFileDef {
 
   function peekNext(): Token | undefined {
     return tokens[pos + 1]
+  }
+
+  function peekNextNext(): Token | undefined {
+    return tokens[pos + 2]
   }
 
   // overloading

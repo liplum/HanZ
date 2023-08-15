@@ -3,7 +3,8 @@
 ## Identifiers
 
 An **identifier** is a name given to a variable, function, or other programming construct.
-Identifiers can only consist of alphabetic characters and Chinese characters. Examples of valid identifiers are `num` and `数`.
+Identifiers can consist of unicode characters excluding punctuation.
+Examples of valid identifiers are `num` and `数`.
 
 ## Line Ending
 
@@ -55,4 +56,13 @@ Here's an example of a comment:
 
 ```c
 // This is a comment explaining the purpose of the following code.
+```
+
+## Typing
+
+HanZ compiler has static type checking.
+Here is the syntax to type.
+
+```
+
 ```

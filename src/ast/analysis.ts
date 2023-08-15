@@ -1,4 +1,4 @@
-import { HzFuncDecl, HzNaryFuncDecl, HzObjDecl, getFuncSignature } from "../parse/declaration.js"
+import { HzFuncDecl, HzNaryFuncDecl, HzObjDecl, HzVarDecl, getFuncSignature } from "../parse/declaration.js"
 import { HzBinaryExpr, HzExpr, HzLiteralExpr, HzNaryFuncCallExpr, HzNullaryFuncCallExpr, HzVarExpr } from "../parse/expr.js"
 import { HzFileDef } from "../parse/file.js"
 import { HzBoolLiteral, HzNumberLiteral, HzStringLiteral } from "../parse/literal.js"
@@ -27,6 +27,13 @@ export function semanticAnalyze(fileDef: HzFileDef): FileNode {
       const initNode = new InitStatementNode()
       fileNode.addStatement(initNode)
       buildInitStatmt(initNode, topLevel)
+    } else if (Array.isArray(topLevel)) {
+      for (const varDecl of topLevel) {
+        if (varDecl instanceof HzVarDecl) {
+          const local = new LocalVarNode(varDecl.name)
+          fileNode.defineLocal(local)
+        }
+      }
     }
   }
   return fileNode

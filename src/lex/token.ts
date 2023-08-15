@@ -12,6 +12,8 @@ export enum TokenType {
   init = ":=",
   lbracket = "[",
   rbracket = "]",
+  lParen = "(",
+  rParen = ")",
 }
 
 export enum Keyword {
@@ -82,7 +84,7 @@ export function parseKeyword(identifier: string): Keyword | undefined {
   return en2Keyword[identifier] ?? hanSimplified2Keyword[identifier]
 }
 
-export type IndependentTokenType = TokenType.dot | TokenType.eof | TokenType.vBar | TokenType.lbracket | TokenType.rbracket | TokenType.colon | TokenType.comma | TokenType.init
+export type IndependentTokenType = TokenType.dot | TokenType.eof | TokenType.vBar | TokenType.lbracket | TokenType.rbracket | TokenType.colon | TokenType.comma | TokenType.init | TokenType.lParen | TokenType.rParen
 
 export type Token = ({
   type: IndependentTokenType
