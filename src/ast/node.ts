@@ -11,6 +11,7 @@ export abstract class ASTNode {
   abstract get isLeaf(): boolean
   *children(): Iterable<ASTNode> { }
   build(): void { }
+  link(): void { }
   findRef(name: string): RefNode | undefined {
     return this.parent?.findRef(name)
   }
@@ -290,6 +291,12 @@ export class RefExprNode extends ExprNode {
   get isLeaf(): boolean {
     return true
   }
+  link(): void {
+    const ref = this.parent?.findRef(this.def.name)
+    if (ref === undefined)
+      throw new SemanticAnalysisError(`${this.def.name} not declared`, this.def)
+    this.ref = ref
+  }
 }
 
 export class BinaryExprNode extends ExprNode {
@@ -368,22 +375,27 @@ export class FuncCallExprNode extends ExprNode {
   }
   build(): void {
     if (this.def instanceof HzNullaryFuncCallExpr) {
-      const signature = getFuncSignature(this.def.selector)
-      const func = this.parent?.findRef(signature)
-      this.setFunc(func instanceof FuncNode ? func : signature)
       if (this.def.caller) {
         this.setCaller(makeExprNode(this.def.caller))
       }
     } else if (this.def instanceof HzNaryFuncCallExpr) {
-      const signature = getFuncSignature(this.def.selectors)
-      const func = this.parent?.findRef(signature)
-      this.setFunc(func instanceof FuncNode ? func : signature)
       if (this.def.caller) {
         this.setCaller(makeExprNode(this.def.caller))
       }
       for (const arg of this.def.selectors) {
         this.addArg(makeExprNode(arg.arg))
       }
+    }
+  }
+  link(): void {
+    if (this.def instanceof HzNullaryFuncCallExpr) {
+      const signature = getFuncSignature(this.def.selector)
+      const func = this.parent?.findRef(signature)
+      this.setFunc(func instanceof FuncNode ? func : signature)
+    } else if (this.def instanceof HzNaryFuncCallExpr) {
+      const signature = getFuncSignature(this.def.selectors)
+      const func = this.parent?.findRef(signature)
+      this.setFunc(func instanceof FuncNode ? func : signature)
     }
   }
 }
@@ -611,12 +623,14 @@ export class InitStatementNode extends StatementNode {
     yield this.rvalue
   }
   build(): void {
+    this.defRvalue(makeExprNode(this.def.value))
+  }
+  link(): void {
     const lvalueName = this.def.name
     const lvalue = this.parent?.findRef(lvalueName)
     if (lvalue === undefined)
       throw new SemanticAnalysisError(`${lvalueName} not declared`, this.def)
     this.lvalue = lvalue
-    this.defRvalue(makeExprNode(this.def.value))
   }
 }
 
