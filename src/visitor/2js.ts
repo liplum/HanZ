@@ -1,5 +1,5 @@
 import { Writable } from "stream"
-import { BinaryExprNode, BlockNode, BreakStatementNode, ContinueStatementNode, CtorNode, DynamicFuncCallExprNode, ExprNode, ExprStatementNode, FieldNode, FileNode, FuncCallExprNode, FuncNode, IfStatementNode, InitStatementNode, LiteralExprNode, ObjMethodNode, ObjNode, RefExprNode, ReturnStatementNode, SelfRefNode, StatementNode, WhileStatementNode } from "../ast/node.js"
+import { BinaryExprNode, BlockNode, BreakStatementNode, ContinueStatementNode, CtorNode, DynamicFuncCallExprNode, ExprNode, ExprStatementNode, FieldNode, FileNode, FuncCallExprNode, FuncNode, IfStatementNode, InitStatementNode, LiteralExprNode, LocalVarNode, ObjMethodNode, ObjNode, RefExprNode, ReturnStatementNode, SelfRefNode, StatementNode, WhileStatementNode } from "../ast/node.js"
 
 export function transpile2Js(fileNode: FileNode, output: Writable) {
   for (const symbol of fileNode.locals.values()) {
@@ -7,6 +7,8 @@ export function transpile2Js(fileNode: FileNode, output: Writable) {
       genObj(symbol)
     } else if (symbol instanceof FuncNode) {
       genFuncDecl(symbol)
+    } else if (symbol instanceof LocalVarNode) {
+      genLocalVar(symbol)
     }
   }
   for (const statmt of fileNode.statements) {
@@ -15,10 +17,14 @@ export function transpile2Js(fileNode: FileNode, output: Writable) {
 
   output.end()
 
+  function genLocalVar(local: LocalVarNode): void {
+    output.write(`let ${local.name};`)
+  }
+
   function genObj(obj: ObjNode): void {
     output.write(`class ${obj.name}{`)
     for (const ctor of obj.ctors.values()) {
-      output.write(`static init$${ctor.name}`)
+      output.write(`static ${ctor.name}`)
       genFuncParams(ctor)
       genCtorCodeBlock(ctor.body)
     }

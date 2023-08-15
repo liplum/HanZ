@@ -56,8 +56,8 @@ test("[parse] simple expr", t => {
   const source = "5.14 + 16 * 3。"
   const tokens = lex(source)
   t.is(tokens.length, 7)
-  const topLevels = parse(tokens)
-  t.is(topLevels.length, 1)
+  const file = parse(tokens)
+  t.is(file.topLevels.length, 1)
 })
 
 test("[parse] object + method + field + method chaining + init + ctor", t => {
@@ -95,8 +95,8 @@ test("[parse] object + method + field + method chaining + init + ctor", t => {
   `
   const tokens = lex(source)
   t.is(tokens.length, 77)
-  const topLevels = parse(tokens)
-  t.is(topLevels.length, 5)
+  const file = parse(tokens)
+  t.is(file.topLevels.length, 5)
 })
 
 test("[x] assign to rvalue", t => {
