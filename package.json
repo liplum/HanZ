@@ -1,7 +1,6 @@
 {
-  "name": "hanz",
+  "name": "@liplum/hanz",
   "version": "0.0.1",
-  "description": "",
   "main": "dist/index.js",
   "type": "module",
   "module": "src/index.ts",
@@ -10,7 +9,7 @@
     "test": "tsc && ava"
   },
   "author": "Liplum",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.4.9",
     "@types/source-map-support": "^0.5.6",
@@ -22,5 +21,17 @@
   },
   "dependencies": {
     "source-map-support": "^0.5.21"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liplum/HanZ.git"
+  },
+  "keywords": [
+    "lang"
+  ],
+  "bugs": {
+    "url": "https://github.com/liplum/HanZ/issues"
+  },
+  "homepage": "https://github.com/liplum/HanZ#readme",
+  "description": ""
 }
