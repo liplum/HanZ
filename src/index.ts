@@ -61,9 +61,9 @@ try {
     const token = e.token
     console.log(nearby(source, token.pos))
   } else if (e instanceof ASTNodeDefinedError) {
-    //
+    // 
   } else if (e instanceof SemanticAnalysisError) {
-    //
+    // 
   }
   console.error(e, full)
 }

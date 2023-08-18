@@ -1,5 +1,9 @@
 # Basic Concepts
 
+## Source File
+
+The name of HanZ source file ends with `.hanz`.
+
 ## Identifiers
 
 An **identifier** is a name given to a variable, function, or other programming construct.
