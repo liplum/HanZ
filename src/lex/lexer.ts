@@ -1,12 +1,12 @@
 // lexer.ts
-import { TokenType, Keyword, Token, parseKeyword, Operator as Op, IndependentTokenType } from "./token.js"
+import { TokenType, Keyword, Token, parseKeyword, Op as Op, IndependentTokenType } from "./token.js"
 
 function isDigitChar(code: number): boolean {
   // ASCII codes for '0' to '9'
   return code >= 48 && code <= 57
 }
 
-function isValidIdentifierChar(char: string): boolean {
+function isValidIdChar(char: string): boolean {
   return /\p{ID_Continue}/u.test(char)
 }
 
@@ -94,8 +94,8 @@ export function lex(source: string) {
     } else if (code === 124 || code === 0xFF5C) { // "|", fullwidth Vertical Line
       advance()
       tokens.push($token(TokenType.vBar))
-    } else if (isValidIdentifierChar(char)) {
-      scanIdentifier()
+    } else if (isValidIdChar(char)) {
+      scanId()
     } else {
       throw $err(`Unrecognized character '${char}'[${code}]`)
     }
@@ -107,11 +107,11 @@ export function lex(source: string) {
     }
   }
 
-  function scanIdentifier(): void {
+  function scanId(): void {
     const chars: string[] = []
     const initial = advance()
     chars.push(initial)
-    while (isValidIdentifierChar(peek())) {
+    while (isValidIdChar(peek())) {
       const char = advance()
       chars.push(char)
     }
@@ -120,7 +120,7 @@ export function lex(source: string) {
     if (keyword) {
       tokens.push($keyword(keyword))
     } else {
-      tokens.push($identifier(identifier))
+      tokens.push($id(identifier))
     }
   }
 
@@ -188,7 +188,7 @@ export function lex(source: string) {
   }
 
   function $keyword(keyword: Keyword): Token {
-    return { type: TokenType.identifier, lexeme: keyword, line, pos }
+    return { type: TokenType.id, lexeme: keyword, line, pos }
   }
 
   function $token(type: IndependentTokenType): Token {
@@ -199,8 +199,8 @@ export function lex(source: string) {
     return { type: TokenType.operator, operator: operator, line, pos }
   }
 
-  function $identifier(lexeme: string): Token {
-    return { type: TokenType.identifier, lexeme, line, pos }
+  function $id(lexeme: string): Token {
+    return { type: TokenType.id, lexeme, line, pos }
   }
 
   function $dot(): Token {

@@ -1,5 +1,5 @@
 import { HzLiteral } from "./literal.js"
-import { Operator } from "../lex/token.js"
+import { Op } from "../lex/token.js"
 
 export const enum ExprType {
   var = "var",
@@ -35,9 +35,9 @@ export class HzRefExpr extends HzExpr {
 
 export class HzBinaryExpr extends HzExpr {
   left: HzExpr
-  op: Operator
+  op: Op
   right: HzExpr
-  constructor({ left, op, right }: { left: HzExpr, op: Operator, right: HzExpr }) {
+  constructor({ left, op, right }: { left: HzExpr, op: Op, right: HzExpr }) {
     super()
     this.left = left
     this.op = op
@@ -54,9 +54,9 @@ export class HzBinaryExpr extends HzExpr {
 }
 
 export class HzUnaryExpr extends HzExpr {
-  op: Operator
+  op: Op
   right: HzExpr
-  constructor({ op, right }: { op: Operator, right: HzExpr }) {
+  constructor({ op, right }: { op: Op, right: HzExpr }) {
     super()
     this.op = op
     this.right = right

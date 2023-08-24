@@ -1,7 +1,7 @@
 export enum TokenType {
   number = "number",
   string = "string",
-  identifier = "identifier",
+  id = "id",
   operator = "operator",
   eof = "eof",
   dot = ".",
@@ -85,14 +85,14 @@ export type IndependentTokenType = TokenType.dot | TokenType.eof | TokenType.vBa
 export type Token = ({
   type: IndependentTokenType
 } | {
-  type: TokenType.identifier
+  type: TokenType.id
   lexeme: string | Keyword
 } | {
   type: TokenType.string
   lexeme: string
 } | {
   type: TokenType.operator
-  operator: Operator
+  operator: Op
 } | {
   type: TokenType.number
   lexeme: string
@@ -102,7 +102,7 @@ export type Token = ({
   pos: number
 }
 
-export enum Operator {
+export enum Op {
   plus = "+",
   minus = "-",
   times = "*",
@@ -122,11 +122,11 @@ export enum Operator {
   assign = "=",
 }
 
-export function isAssign(op: Operator): boolean {
-  return op === Operator.assign
-    || op === Operator.plusAssign
-    || op === Operator.minusAssign
-    || op === Operator.timesAssign
-    || op === Operator.divideAssign
-    || op === Operator.moduloAssign
+export function isAssign(op: Op): boolean {
+  return op === Op.assign
+    || op === Op.plusAssign
+    || op === Op.minusAssign
+    || op === Op.timesAssign
+    || op === Op.divideAssign
+    || op === Op.moduloAssign
 }

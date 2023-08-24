@@ -1,4 +1,4 @@
-import { Keyword, Operator } from "../lex/token.js"
+import { Keyword, Op } from "../lex/token.js"
 import { HzObjDecl, HzFuncDecl, HzVarDecl, HzNaryFuncDecl, getFuncSignature } from "../parse/declaration.js"
 import { HzFileDef } from "../parse/file.js"
 import { HzBreakStatmt, HzCodeBlock, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzWhileStatmt } from "../parse/statement.js"
@@ -306,7 +306,7 @@ export class RefExprNode extends ExprNode {
 
 export class BinaryExprNode extends ExprNode {
   left: ExprNode
-  op: Operator
+  op: Op
   right: ExprNode
   def: HzBinaryExpr
   constructor(def: HzBinaryExpr) {

@@ -3,7 +3,7 @@ import { HzFuncCallExpr, HzNaryCallSelector, HzExpr, HzBinaryExpr, HzLiteralExpr
 import { HzFileDef, TopLevel } from "./file.js"
 import { HzLiteral, LiteralType } from "./literal.js"
 import { HzBreakStatmt, HzCodeBlock, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzWhileStatmt } from "./statement.js"
-import { Keyword, Operator as Op, Token, TokenType, isAssign } from "../lex/token.js"
+import { Keyword, Op, Token, TokenType, isAssign } from "../lex/token.js"
 
 const opPrecedences = {
   [Op.plus]: 2,
@@ -40,7 +40,7 @@ export function parse(tokens: Token[]): HzFileDef {
 
   function parseTopLevel(): TopLevel {
     const t = peek()
-    if (t.type === TokenType.identifier) {
+    if (t.type === TokenType.id) {
       if (t.lexeme === Keyword.object) {
         return parseObjectDecl()
       } else if (t.lexeme === Keyword.func) {
@@ -80,7 +80,7 @@ export function parse(tokens: Token[]): HzFileDef {
 
   function parseInitStatmt(): HzInitStatmt {
     const nameToken = advance()
-    if (nameToken.type !== TokenType.identifier) {
+    if (nameToken.type !== TokenType.id) {
       throw new ParseError("Expect identifier", nameToken)
     }
     if (!tryConsume(TokenType.init)) {
@@ -109,7 +109,7 @@ export function parse(tokens: Token[]): HzFileDef {
       for (const varDecl of varDecls) {
         getVarDecl(varDecl)
       }
-    } else if (t.type === TokenType.identifier) {
+    } else if (t.type === TokenType.id) {
       // if, while, return, break, continue
       if (t.lexeme === Keyword.if) {
         getStatmt(parseIfStatmt())
@@ -133,7 +133,7 @@ export function parse(tokens: Token[]): HzFileDef {
 
   function parseReturnStatmt(): HzReturnStatmt {
     // consume `return`
-    if (!tryConsume(TokenType.identifier, Keyword.return)) {
+    if (!tryConsume(TokenType.id, Keyword.return)) {
       throw new ParseError("Expect 'return'", peek())
     }
     const value = parseExpr()
@@ -145,7 +145,7 @@ export function parse(tokens: Token[]): HzFileDef {
 
   function parseBreakStatmt(): HzBreakStatmt {
     // consume `break`
-    if (!tryConsume(TokenType.identifier, Keyword.break)) {
+    if (!tryConsume(TokenType.id, Keyword.break)) {
       throw new ParseError("Expect 'break'", peek())
     }
     if (!tryConsume(TokenType.dot)) {
@@ -156,7 +156,7 @@ export function parse(tokens: Token[]): HzFileDef {
 
   function parseContinueStatmt(): HzContinueStatmt {
     // consume `continue`
-    if (!tryConsume(TokenType.identifier, Keyword.continue)) {
+    if (!tryConsume(TokenType.id, Keyword.continue)) {
       throw new ParseError("Expect 'continue'", peek())
     }
     if (!tryConsume(TokenType.dot)) {
@@ -167,7 +167,7 @@ export function parse(tokens: Token[]): HzFileDef {
 
   function parseIfStatmt(): HzIfStatmt {
     // consume `if`
-    if (!tryConsume(TokenType.identifier, Keyword.if)) {
+    if (!tryConsume(TokenType.id, Keyword.if)) {
       throw new ParseError("Expect 'if'", peek())
     }
     function parseWithoutIf(): HzIfStatmt {
@@ -175,11 +175,11 @@ export function parse(tokens: Token[]): HzFileDef {
       const consequent = parseBlock()
       let alternate: HzCodeBlock | undefined
       // for cascading if
-      if (tryConsume(TokenType.identifier, Keyword.elif)) {
+      if (tryConsume(TokenType.id, Keyword.elif)) {
         alternate = new HzCodeBlock([parseWithoutIf()])
       }
       // for else branch
-      if (tryConsume(TokenType.identifier, Keyword.else)) {
+      if (tryConsume(TokenType.id, Keyword.else)) {
         alternate = parseBlock()
       }
       alternate ??= new HzCodeBlock()
@@ -190,7 +190,7 @@ export function parse(tokens: Token[]): HzFileDef {
 
   function parseWhileStatmt(): HzWhileStatmt {
     // consume `while`
-    if (!tryConsume(TokenType.identifier, Keyword.while)) {
+    if (!tryConsume(TokenType.id, Keyword.while)) {
       throw new ParseError("Expect 'while'", peek())
     }
     const condition = parseExpr()
@@ -199,11 +199,11 @@ export function parse(tokens: Token[]): HzFileDef {
   }
 
   function parseObjectDecl(): HzObjDecl {
-    if (!tryConsume(TokenType.identifier, Keyword.object)) {
+    if (!tryConsume(TokenType.id, Keyword.object)) {
       throw new ParseError("Expect 'object'", peek())
     }
     const nameToken = advance()
-    if (nameToken.type !== TokenType.identifier) {
+    if (nameToken.type !== TokenType.id) {
       throw new ParseError("Expect identifier after 'object'", nameToken)
     }
     const name = nameToken.lexeme
@@ -221,7 +221,7 @@ export function parse(tokens: Token[]): HzFileDef {
         for (const varDecl of varDecls) {
           fields.push(varDecl)
         }
-      } else if (t.type === TokenType.identifier) {
+      } else if (t.type === TokenType.id) {
         if (t.lexeme === name) {
           // constructor
           const ctor = parseCtorDecl()
@@ -244,7 +244,7 @@ export function parse(tokens: Token[]): HzFileDef {
     return new HzObjDecl({ name, ctors, fields, objMethods, classMethods })
 
     function parseCtorDecl(): HzFuncDecl {
-      if (!tryConsume(TokenType.identifier, name)) {
+      if (!tryConsume(TokenType.id, name)) {
         throw new ParseError("Expect 'func'", peek())
       }
       const selectors = parseFuncSelectors()
@@ -257,7 +257,7 @@ export function parse(tokens: Token[]): HzFileDef {
     }
 
     function parseMethodDecl(isClassMethod?: boolean): HzFuncDecl {
-      if (!isClassMethod && !tryConsume(TokenType.identifier, Keyword.method)) {
+      if (!isClassMethod && !tryConsume(TokenType.id, Keyword.method)) {
         throw new ParseError("Expect 'method'", peek())
       }
       const selectors = parseFuncSelectors()
@@ -278,7 +278,7 @@ export function parse(tokens: Token[]): HzFileDef {
     const vars: HzVarDecl[] = []
     while (peek().type !== TokenType.vBar) {
       const t = advance()
-      if (t.type === TokenType.identifier) {
+      if (t.type === TokenType.id) {
         // var name
         vars.push(new HzVarDecl(t.lexeme))
       }
@@ -290,7 +290,7 @@ export function parse(tokens: Token[]): HzFileDef {
   }
 
   function parseFuncDecl(): HzFuncDecl {
-    if (!tryConsume(TokenType.identifier, Keyword.func)) {
+    if (!tryConsume(TokenType.id, Keyword.func)) {
       throw new ParseError("Expect 'func'", peek())
     }
     const selectors = parseFuncSelectors()
@@ -306,7 +306,7 @@ export function parse(tokens: Token[]): HzFileDef {
     const parts: NaryFuncSelectorDecl[] = []
     do {
       const selector = advance()
-      if (selector.type !== TokenType.identifier) {
+      if (selector.type !== TokenType.id) {
         throw new ParseError("Except selector", selector)
       }
       if (!tryConsume(TokenType.colon)) {
@@ -318,10 +318,10 @@ export function parse(tokens: Token[]): HzFileDef {
         }
       }
       const param = advance()
-      if (param.type !== TokenType.identifier) {
+      if (param.type !== TokenType.id) {
         throw new ParseError("Except parameter", param)
       }
-      if (param.type === TokenType.identifier) {
+      if (param.type === TokenType.id) {
         if (param.lexeme === Keyword.discard) {
           parts.push({ selector: selector.lexeme })
         } else {
@@ -329,7 +329,7 @@ export function parse(tokens: Token[]): HzFileDef {
         }
       }
       // continue scanning if the next token is still an identifier.
-    } while (peek().type === TokenType.identifier)
+    } while (peek().type === TokenType.id)
     return parts
   }
 
@@ -369,9 +369,9 @@ export function parse(tokens: Token[]): HzFileDef {
     } else if (t.type === TokenType.string) {
       advance()
       return new HzLiteralExpr(new HzLiteral(LiteralType.string, t.lexeme))
-    } else if (t.type === TokenType.identifier) {
+    } else if (t.type === TokenType.id) {
       const nextToken = peekNext()
-      if (nextToken?.type === TokenType.identifier) {
+      if (nextToken?.type === TokenType.id) {
         advance()
         // function call
         return parseFuncCallExpr(new HzRefExpr({ name: t.lexeme }))
@@ -416,7 +416,7 @@ export function parse(tokens: Token[]): HzFileDef {
       const selectors: HzNaryCallSelector[] = []
       do {
         const selector = peek()
-        if (selector.type !== TokenType.identifier) {
+        if (selector.type !== TokenType.id) {
           throw new ParseError("Expect selector", selector)
         }
         advance()
@@ -430,7 +430,7 @@ export function parse(tokens: Token[]): HzFileDef {
         }
         const arg = parseExpr()
         selectors.push({ selector: selector.lexeme, arg })
-      } while (peek().type === TokenType.identifier)
+      } while (peek().type === TokenType.id)
       return new HzNaryFuncCallExpr({ caller, selectors })
     }
   }
@@ -450,13 +450,13 @@ export function parse(tokens: Token[]): HzFileDef {
 
   // overloading
   function tryConsume(expected: TokenType): boolean
-  function tryConsume(expected: TokenType.identifier, value: string | Keyword): boolean
+  function tryConsume(expected: TokenType.id, value: string | Keyword): boolean
   function tryConsume(expected: TokenType.operator, value: Op): boolean
   function tryConsume(expected: TokenType, value?: string | Keyword | Op): boolean {
     const t = peek()
     if (t === undefined) return false
     if (t.type != expected) return false
-    if (t.type === TokenType.identifier && t.lexeme !== value) return false
+    if (t.type === TokenType.id && t.lexeme !== value) return false
     if (t.type === TokenType.operator && t.operator !== value) return false
     pos++
     return true
