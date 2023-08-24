@@ -1,7 +1,6 @@
 export enum TokenType {
   number = "number",
   string = "string",
-  keyword = "keyword",
   identifier = "identifier",
   operator = "operator",
   eof = "eof",
@@ -27,9 +26,6 @@ export enum Keyword {
   break = "break",
   continue = "continue",
   return = "return",
-}
-
-export enum SoftKeyword {
   self = "self",
   discard = "_",
   undefined = "undefined",
@@ -49,6 +45,12 @@ export const en2Keyword = {
   break: Keyword.break,
   continue: Keyword.continue,
   return: Keyword.return,
+  self: Keyword.self,
+  _: Keyword.discard,
+  true: Keyword.true,
+  false: Keyword.false,
+  undefined: Keyword.undefined,
+  null: Keyword.null,
 }
 
 export const hanSimplified2Keyword = {
@@ -62,22 +64,16 @@ export const hanSimplified2Keyword = {
   中断: Keyword.break,
   继续: Keyword.continue,
   返回: Keyword.return,
-}
-
-export const hanSimplified2Identifier = {
-  自己: SoftKeyword.self,
-  真值: SoftKeyword.true,
-  假值: SoftKeyword.false,
-  未定义: SoftKeyword.undefined,
-  空值: SoftKeyword.null,
+  自己: Keyword.self,
+  _: Keyword.discard,
+  真值: Keyword.true,
+  假值: Keyword.false,
+  未定义: Keyword.undefined,
+  空值: Keyword.null,
 }
 
 export function isKeyword(identifier: string): boolean {
   return Boolean(en2Keyword[identifier]) || Boolean(hanSimplified2Keyword[identifier])
-}
-
-export function mapIdentifier(identifier: string): string {
-  return hanSimplified2Identifier[identifier] ?? identifier
 }
 
 export function parseKeyword(identifier: string): Keyword | undefined {
@@ -89,11 +85,8 @@ export type IndependentTokenType = TokenType.dot | TokenType.eof | TokenType.vBa
 export type Token = ({
   type: IndependentTokenType
 } | {
-  type: TokenType.keyword
-  keyword: Keyword
-} | {
   type: TokenType.identifier
-  lexeme: string | SoftKeyword
+  lexeme: string | Keyword
 } | {
   type: TokenType.string
   lexeme: string

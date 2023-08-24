@@ -1,4 +1,4 @@
-import { Operator, SoftKeyword } from "../lex/token.js"
+import { Keyword, Operator } from "../lex/token.js"
 import { HzObjDecl, HzFuncDecl, HzVarDecl, HzNaryFuncDecl, getFuncSignature } from "../parse/declaration.js"
 import { HzFileDef } from "../parse/file.js"
 import { HzBreakStatmt, HzCodeBlock, HzContinueStatmt, HzExprStatmt, HzIfStatmt, HzInitStatmt, HzReturnStatmt, HzStatmt, HzWhileStatmt } from "../parse/statement.js"
@@ -425,7 +425,7 @@ export class LiteralExprNode extends ExprNode {
     this.type = this.def.value.type
     this.raw = literal.raw
     if (literal.type === LiteralType.bool) {
-      this.value = literal.raw === SoftKeyword.true
+      this.value = literal.raw === Keyword.true
     } else if (literal.type === LiteralType.string) {
       this.value = literal.raw
     } else if (literal.type === LiteralType.number) {
