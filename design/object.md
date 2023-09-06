@@ -1,13 +1,74 @@
 # Object
 
-## Declaration
-
-1. The `object`/`对象` keyword is used to declare an object.
-2. Constructors are declared by the name of object, and should be named.
-3. Fields are declared in the object-level, and can be initialized in the constructors.
+## Full Example
 
 ```
-对象 账户【
+定义类 账户【
+  定义字段 | 余额 |
+  定义构造【
+    新建【
+      余额 = 0。
+    】
+    继承自: 另一账户【
+      余额 = 另一账户 余额。
+    】
+  】
+  定义类方法【
+    交换: 账户甲 与: 账户乙【
+      临时 := 账户甲 余额。
+      账户甲 设置余额: 账户乙 余额。
+      账户乙 设置余额: 临时。
+    】
+  】
+  定义方法【
+    设置余额: 金额【
+      如果 金额 < 0【
+        余额 = 0。
+      】否则【
+        余额 = 金额。
+      】 
+    】
+    存入: 金额【
+      余额 += 金额。
+      返回 自己。
+    】
+    取出: 金额【
+      余额 -= 金额。
+      返回 自己。
+    】
+  】
+】
+```
+
+## Declaration
+
+1. The `defObject`/`定义对象` keyword is used to declare an object.
+2. A colon is after the keyword.
+
+```
+定义对象 账户【
+// ...
+】
+```
+
+## Fields
+
+1. The `defField`/`定义字段` keyword is used to declare fields.
+1. Fields can be initialized in the constructors.
+
+```
+定义对象 账户【
+  | 余额 |
+// ...
+】
+```
+
+## Constructors
+
+1. Constructors are declared by the name of object, and should be named.
+
+```
+定义对象 账户【
   | 余额 |
   
   账户 新建【
@@ -29,25 +90,11 @@
 
 ## Method
 
+2. **Return**: Use `return`/`返回` to return any value for the caller.
+
 ```
-对象 账户【
-  | 余额 |
-
-  账户 新建【
-    余额 = 0。
-  】
-
-  账户 继承自: 另一账户【
-    余额 = 另一账户 余额。
-  】
-
-  交换: 账户甲 与: 账户乙【
-    临时 := 账户甲 余额。
-    账户甲 设置余额: 账户乙 余额。
-    账户乙 设置余额: 临时。
-  】
-
-  方法 设置余额: 金额【
+定义对象 账户【
+  定义方法 设置余额: 金额【
     如果 金额 < 0【
       余额 = 0。
     】否则【
@@ -56,13 +103,13 @@
   】
 
   // to deposit money
-  方法 存入: 金额【
+  定义方法 存入: 金额【
     余额 += 金额。
     返回 自己。
   】
    
   // to withdraw money
-  方法 取出: 金额【
+  定义方法 取出: 金额【
     余额 -= 金额。
     返回 自己。
   】
