@@ -48,3 +48,37 @@ Utils [
 
 结果 := 工具 加: 3 和: 4。
 ```
+
+## Localization
+
+```
+// utils.hanz
+@en ["utils"]
+[class]
+Compute [
+  [static]
+  fibonacci: x [
+    // ...
+  ]
+]
+```
+
+```
+// utils_l10n.hanz
+@en [l10n, "utils"]
+
+[class]
+@zh_CN [计算]
+Compute [
+  @zh_CN [斐波那契]
+  fibonacci: x.
+]
+```
+
+```
+// app.hanz
+@zh_CN ["app"]
+模块 加载: "utils" 语言环境: "zh_CN" 本地化: "utils_l10n"。
+
+结果 := 计算 斐波那契: 9。
+```
