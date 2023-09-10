@@ -28,17 +28,23 @@ project/
 
 ```
 // in "liplum/utils.hanz" file
-Package declare: "liplum.utils"
+@en ["liplum.utils"]
 
-func add: a to: b [
-  return a + b
+[class]
+@zh_CN [工具]
+Utils [
+  [static]
+  @zh_CN [加, 和]
+  add: a to: b [
+    return a + b.
+  ]
 ]
 ```
 
 ```
 // in "liplum/core.hanz" file
-Package declare: "liplum.core"
-Package load: "liplum.utils"
+@zh_CN ["liplum.core"]
+模块 加载: "liplum.utils" 语言环境: "zh_CN"。
 
-result := add: 3 to: 4
+结果 := 工具 加: 3 和: 4。
 ```
