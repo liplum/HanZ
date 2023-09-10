@@ -1,6 +1,8 @@
 # Object
 
-## Full Example
+## Definition
+
+### Full Example
 
 ```
 定义类 账户【
@@ -40,7 +42,7 @@
 】
 ```
 
-## Declaration
+### Declaration
 
 1. The `defObject`/`定义对象` keyword is used to declare an object.
 2. A colon is after the keyword.
@@ -51,24 +53,24 @@
 】
 ```
 
-## Fields
+### Fields
 
 1. The `defField`/`定义字段` keyword is used to declare fields.
 1. Fields can be initialized in the constructors.
 
 ```
-定义对象 账户【
+定义类 账户【
   | 余额 |
 // ...
 】
 ```
 
-## Constructors
+### Constructors
 
 1. Constructors are declared by the name of object, and should be named.
 
 ```
-定义对象 账户【
+定义类 账户【
   | 余额 |
   
   账户 新建【
@@ -81,16 +83,10 @@
 】
 ```
 
-## Instantiation
+### Methods
 
-```
-账户甲:= 账户 新建
-账户乙:= 账户 继承自: 账户甲
-```
+1. **Return**: Use `return`/`返回` to return any value for the caller.
 
-## Method
-
-2. **Return**: Use `return`/`返回` to return any value for the caller.
 
 ```
 定义对象 账户【
@@ -116,7 +112,24 @@
 】
 ```
 
-## Method Calling
+
+### Access of fields and methods
+
+1. **This**: Use `this`/`这个` to access fields and methods from the class definition only. This guarantees:
+    1. It's closed recursion. Access of inherited fields and methods is prohibited.
+2. **Self**: Use `self`/`自己` to access fields and methods from the class definition or parent definitions. This guarantees:
+    1. It's open recursion. Access of fields and methods is dynamic dispatched.
+
+## Outside
+
+### Instantiation
+
+```
+账户甲:= 账户 新建
+账户乙:= 账户 继承自: 账户甲
+```
+
+### Calling Method
 
 ```
 账户甲 := 账户 新建。
@@ -125,19 +138,4 @@
 账户甲 取出: 199。
 // equivalent to method chaining below
 账户甲 存入: 799, 取出: 199。
-```
-
-## Functor
-
-Example 1. To calculate BMI.
-
-```
-对象 计算BMI指数【
-  函数 身高: _ 体重: _【
-    返回 体重 / (身高 * 身高)。
-  】
-】
-
-| BMI |
-BMI = 计算BMI指数 身高:180 体重:75。
 ```
